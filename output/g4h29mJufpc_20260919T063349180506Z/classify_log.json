@@ -1,0 +1,12 @@
+{
+  "input": "output/g4h29mJufpc_20260919T063349180506Z/comments.csv",
+  "model": "openai/gpt-oss-120b",
+  "base_url": "https://openrouter.ai/api/v1",
+  "criteria_file": "cy-index.txt",
+  "batch_size": 20,
+  "temperature": 0,
+  "n_comments": 2156,
+  "n_failed": 0,
+  "started_at": "2026-09-19T06:33:49.831777+00:00",
+  "finished_at": "2026-09-19T07:25:45.253438+00:00"
+}

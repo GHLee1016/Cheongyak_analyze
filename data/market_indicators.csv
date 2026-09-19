@@ -1,0 +1,19 @@
+﻿category,indicator,value,unit,period,source,source_url
+분양가,서울 민간아파트 평균 분양가(3.3㎡당),6287.0,만원,2026-08,HUG 민간아파트 분양가격 동향 (뉴데일리 보도),https://biz.newdaily.co.kr/site/data/html/2026/09/18/2026091800233.html
+분양가,서울 민간아파트 분양가 전년 동월 대비 상승률,34.2,%,2026-08,HUG (뉴데일리 보도),https://biz.newdaily.co.kr/site/data/html/2026/09/18/2026091800233.html
+분양가,서울 전용 84㎡ 환산 평균 분양가,21.376,억원,2026-08,HUG (뉴데일리 보도),https://biz.newdaily.co.kr/site/data/html/2026/09/18/2026091800233.html
+분양가,수도권 민간아파트 평균 분양가(3.3㎡당),3615.0,만원,2026-08,HUG (뉴데일리 보도),https://biz.newdaily.co.kr/site/data/html/2026/09/18/2026091800233.html
+분양가,전국 민간아파트 평균 분양가(3.3㎡당),2029.0,만원,2026-08,HUG (뉴데일리 보도),https://biz.newdaily.co.kr/site/data/html/2026/09/18/2026091800233.html
+대출규제,규제지역 주담대 LTV,40.0,%,2025-10-15,10·15 주택시장 안정화 대책 (정책브리핑),https://www.korea.kr/news/policyNewsView.do?newsId=148950959
+대출규제,주담대 한도: 주택가격 15억 이하,6.0,억원,2025-10-15,10·15 대책 (정책브리핑),https://www.korea.kr/news/policyNewsView.do?newsId=148950959
+대출규제,주담대 한도: 15억 초과~25억 이하,4.0,억원,2025-10-15,10·15 대책 (정책브리핑),https://www.korea.kr/news/policyNewsView.do?newsId=148950959
+대출규제,주담대 한도: 25억 초과,2.0,억원,2025-10-15,10·15 대책 (정책브리핑),https://www.korea.kr/news/policyNewsView.do?newsId=148950959
+매매가격,서울 아파트 매매가격 1~8월 누적 변동률,7.52,%,2026-08,한국부동산원 월간 주택가격동향 (글로벌이코노믹 보도),https://www.g-enews.com/article/Real-Estate/2026/09/20260915103930303414b1077807_1
+매매가격,서울 아파트 매매가격 8월 변동률,1.05,%,2026-08,한국부동산원 (글로벌이코노믹 보도),https://www.g-enews.com/article/Real-Estate/2026/09/20260915103930303414b1077807_1
+매매가격,서울 아파트 매매가격 주간 변동률,0.2,%,2026-09 1주,한국부동산원 주간 아파트가격동향 (국제뉴스 보도),https://www.gukjenews.com/news/articleView.html?idxno=3691555
+매매가격,4대 광역시 아파트 매매가격 주간 변동률,0.01,%,2026-09 1주,한국부동산원 (국제뉴스 보도),https://www.gukjenews.com/news/articleView.html?idxno=3691555
+매매가격,세종 아파트 매매가격 주간 변동률,-0.02,%,2026-09 1주,한국부동산원 (국제뉴스 보도),https://www.gukjenews.com/news/articleView.html?idxno=3691555
+청약통장,주택청약종합저축 가입자(정점),2677.0,만명,2021,국토교통부 자료 (뉴스핌 보도),https://www.newspim.com/news/view/20260831000501
+청약통장,주택청약종합저축 가입자,2471.0,만명,2026-06,국토교통부 자료 (뉴스핌 보도),https://www.newspim.com/news/view/20260831000501
+청약통장,신규 가입 좌수,183.6,만좌,2026-01~07,국토교통부 자료 (뉴스핌 보도),https://www.newspim.com/news/view/20260831000501
+청약통장,해지 좌수,216.5,만좌,2026-01~07,국토교통부 자료 (뉴스핌 보도),https://www.newspim.com/news/view/20260831000501

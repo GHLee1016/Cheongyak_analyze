@@ -1,0 +1,22 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.env
+.DS_Store
+
+# 보고서 생성 도구 (npm install 로 다시 받음)
+report/node_modules/
+report/package-lock.json
+
+# 용량이 큰 원자료 · 개인 작업 파일
+output/housing/apt_trades.csv
+
+# 채팅으로 받은 공유용 사본 (원본은 output/ 에 있음)
+Claude outputs/

@@ -1,0 +1,9 @@
+{
+  "name": "cheongyak-report",
+  "version": "1.0.0",
+  "private": true,
+  "description": "청약 인식 보고서 초안(.docx) 생성",
+  "main": "build_report.js",
+  "scripts": { "build": "node build_report.js" },
+  "dependencies": { "docx": "^9.0.0" }
+}

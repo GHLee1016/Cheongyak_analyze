@@ -1,0 +1,10 @@
+python-dotenv
+google-api-python-client
+httplib2
+openai
+pandas
+psycopg2-binary
+matplotlib
+scikit-learn
+openpyxl
+requests

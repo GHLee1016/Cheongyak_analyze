@@ -1,0 +1,22 @@
+{
+  "mode": "LIVE_API",
+  "video_id": "g4h29mJufpc",
+  "title": "청약통장 다들 왜 깨고 있을까?｜크랩",
+  "channel_title": "크랩 KLAB",
+  "channel_id": "UCoxT1kQSLq564FwpK473w-g",
+  "video_published_at": "2026-09-11T08:00:36Z",
+  "order": "time",
+  "scope": "top_level_only",
+  "max_pages": 1000,
+  "page_size": 100,
+  "comment_date_filter": null,
+  "pages_requested": 22,
+  "pages_received": 22,
+  "received_items": 2156,
+  "duplicates_skipped": 0,
+  "stop_reason": "no_next_page",
+  "has_more": false,
+  "error": null,
+  "collected_at": "2026-09-19T06:33:44.893221+00:00",
+  "saved_rows": 2156
+}
