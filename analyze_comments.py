@@ -196,6 +196,91 @@ def latest_classified():
     return runs[-1]
 
 
+# ---------------------------------------------------------------------------
+# 일주일 동안의 변화 (날짜별·구간별 태도, 관심사, 행동)
+# ---------------------------------------------------------------------------
+# 날짜별 댓글 수가 뒤로 갈수록 크게 줄어(9/19는 12개) 하루 단위 비율은 흔들리기 쉽다.
+# 그래서 비슷한 규모가 되도록 세 구간(첫날 / 둘째·셋째 날 / 나머지 나흘)으로도 묶어 비교한다.
+def period_label(day):
+    if day <= "2026-09-13":
+        return "9/13"
+    if day <= "2026-09-15":
+        return "9/14~15"
+    return "9/16~19"
+
+
+def chi_square(table):
+    """태도 × 구간 교차표의 카이제곱 독립성 검정 (scipy 가 있으면 p값까지)."""
+    try:
+        from scipy.stats import chi2_contingency
+        chi2, pval, dof, _ = chi2_contingency(table)
+        return {"chi2": _r(chi2, 2), "p": _r(pval, 3), "dof": int(dof)}
+    except ImportError:
+        return None
+
+
+def compute_trend(d):
+    d = d.copy()
+    d["day"] = d.published_kst.dt.strftime("%Y-%m-%d")
+    d["period"] = d.day.map(period_label)
+
+    def summarize(g):
+        rel = g[g.stance != "X"]
+        n_rel = max(len(rel), 1)
+        return {
+            "n": int(len(g)), "n_relevant": int(len(rel)),
+            "stance_share": {k: _r((rel.stance == k).sum() / n_rel * 100) for k in "NMP"},
+            "irrelevant_share": _r((g.stance == "X").mean() * 100),
+            "topic_share": {k: _r(g.topics.str.contains(k).mean() * 100) for k in TOPICS},
+            "action": {k: int((g.action == k).sum()) for k in "HK"},
+            "outlook": {k: int((g.outlook == k).sum()) for k in "UD"},
+            "political": int(g.comment.str.contains(POLITICAL_PATTERN, regex=True).sum()),
+            "likes": int(g.like_count.sum()),
+        }
+
+    rel = d[d.stance != "X"]
+    return {
+        "daily": {day: summarize(g) for day, g in d.groupby("day")},
+        "period": {p: summarize(g) for p, g in d.groupby("period")},
+        "period_test": chi_square(pd.crosstab(rel.period, rel.stance)),
+        "daily_test": chi_square(pd.crosstab(rel.day, rel.stance)),
+    }
+
+
+def fig_trend(trend, path):
+    """위: 날짜별 댓글 수 / 아래: 날짜별 태도 비중(청약 관련 댓글 기준, 100% 누적)."""
+    days = sorted(trend["daily"])
+    labels = [f"{int(x[5:7])}/{int(x[8:])}" for x in days]
+    n = [trend["daily"][x]["n"] for x in days]
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 5.2), dpi=200, sharex=True,
+                                   gridspec_kw={"height_ratios": [1, 2.2]})
+    ax1.bar(range(len(days)), n, color="#9fb8d9", width=0.6)
+    for i, v in enumerate(n):
+        ax1.text(i, v + max(n) * 0.03, f"{v}", ha="center", va="bottom", fontsize=8.5, color=INK)
+    ax1.set_ylim(0, max(n) * 1.25); ax1.set_yticks([])
+    ax1.set_title("날짜별 댓글 수", fontsize=10, color=INK, loc="left")
+    names = [("N", STANCE["N"]), ("M", STANCE["M"]), ("P", STANCE["P"])]
+    bottom = [0] * len(days)
+    for j, (k, _) in enumerate(names):
+        vals = [trend["daily"][x]["stance_share"][k] for x in days]
+        ax2.bar(range(len(days)), vals, bottom=bottom, color=COLORS[j], width=0.6, edgecolor="#fcfcfb", linewidth=1.5)
+        for i, v in enumerate(vals):
+            if v >= 7:
+                ax2.text(i, bottom[i] + v / 2, f"{v:.0f}%", ha="center", va="center", fontsize=8, color="white")
+        bottom = [a + b for a, b in zip(bottom, vals)]
+    ax2.set_ylim(0, 100); ax2.set_yticks([0, 50, 100]); ax2.set_yticklabels(["0%", "50%", "100%"], fontsize=8, color=SUB)
+    ax2.set_title("날짜별 태도 비중 (청약 관련 댓글 기준)", fontsize=10, color=INK, loc="left")
+    ax2.set_xticks(range(len(days))); ax2.set_xticklabels(labels, fontsize=9, color=INK)
+    for ax in (ax1, ax2):
+        for sp in ax.spines.values():
+            sp.set_visible(False)
+        ax.tick_params(length=0)
+    ax2.legend([plt.Rectangle((0, 0), 1, 1, color=c) for c in COLORS], [l for _, l in names],
+               ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.12), frameon=False, fontsize=9)
+    fig.text(0.01, 0.005, "* 9/16 이후는 하루 댓글이 12~61개로 적어 비율 변동이 큼", fontsize=7.5, color=SUB)
+    plt.tight_layout(rect=(0, 0.02, 1, 1)); plt.savefig(path, facecolor="white"); plt.close()
+
+
 def main():
     parser = argparse.ArgumentParser(description="분류 결과를 집계합니다.")
     parser.add_argument("--input", help="classified.csv 경로")
@@ -225,6 +310,7 @@ def main():
     else:
         st["model_label"] = "Claude (Anthropic)"
         st["batch_size"] = 150
+    st["trend"] = compute_trend(d)
     (out_dir / "stats.json").write_text(json.dumps(st, ensure_ascii=False, indent=2, default=str, allow_nan=False), encoding="utf-8")
     pd.DataFrame({"관심사": list(TOPICS.values()),
                   "언급비율(%)": [st["topic_share"][k] for k in TOPICS],
@@ -233,6 +319,8 @@ def main():
       .to_csv(out_dir / "topic_summary.csv", index=False, encoding="utf-8-sig")
     fig_stance(st, out_dir / "fig1_stance.png")
     fig_topics(st, out_dir / "fig2_topics.png")
+    trend = compute_trend(d)
+    fig_trend(trend, out_dir / "fig4_daily_trend.png")
 
     s = st
     print(f"입력: {src} — 댓글 {s['n_comments']:,}개 (관련 {s['n_relevant']}, 무관 {s['n_irrelevant']})")

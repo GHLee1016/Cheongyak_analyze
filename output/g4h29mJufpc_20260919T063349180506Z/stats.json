@@ -298,5 +298,331 @@
     "2026-09-19"
   ],
   "model_label": "openai/gpt-oss-120b (OpenRouter 경유)",
-  "batch_size": 20
+  "batch_size": 20,
+  "trend": {
+    "daily": {
+      "2026-09-13": {
+        "n": 417,
+        "n_relevant": 325,
+        "stance_share": {
+          "N": 69.5,
+          "M": 17.8,
+          "P": 12.6
+        },
+        "irrelevant_share": 22.1,
+        "topic_share": {
+          "A": 27.1,
+          "B": 14.9,
+          "C": 11.8,
+          "D": 19.9,
+          "E": 9.4,
+          "F": 11.3,
+          "G": 9.6,
+          "H": 6.7,
+          "I": 1.9
+        },
+        "action": {
+          "H": 44,
+          "K": 35
+        },
+        "outlook": {
+          "U": 9,
+          "D": 10
+        },
+        "political": 35,
+        "likes": 196
+      },
+      "2026-09-14": {
+        "n": 211,
+        "n_relevant": 155,
+        "stance_share": {
+          "N": 72.9,
+          "M": 18.7,
+          "P": 8.4
+        },
+        "irrelevant_share": 26.5,
+        "topic_share": {
+          "A": 27.0,
+          "B": 14.2,
+          "C": 10.0,
+          "D": 18.5,
+          "E": 9.0,
+          "F": 13.3,
+          "G": 6.6,
+          "H": 4.7,
+          "I": 0.9
+        },
+        "action": {
+          "H": 20,
+          "K": 10
+        },
+        "outlook": {
+          "U": 1,
+          "D": 7
+        },
+        "political": 13,
+        "likes": 1430
+      },
+      "2026-09-15": {
+        "n": 262,
+        "n_relevant": 207,
+        "stance_share": {
+          "N": 70.0,
+          "M": 23.2,
+          "P": 6.8
+        },
+        "irrelevant_share": 21.0,
+        "topic_share": {
+          "A": 30.5,
+          "B": 18.3,
+          "C": 13.4,
+          "D": 18.7,
+          "E": 10.7,
+          "F": 14.1,
+          "G": 8.8,
+          "H": 4.6,
+          "I": 2.3
+        },
+        "action": {
+          "H": 29,
+          "K": 18
+        },
+        "outlook": {
+          "U": 6,
+          "D": 9
+        },
+        "political": 11,
+        "likes": 31
+      },
+      "2026-09-16": {
+        "n": 61,
+        "n_relevant": 40,
+        "stance_share": {
+          "N": 60.0,
+          "M": 27.5,
+          "P": 12.5
+        },
+        "irrelevant_share": 34.4,
+        "topic_share": {
+          "A": 32.8,
+          "B": 11.5,
+          "C": 11.5,
+          "D": 16.4,
+          "E": 11.5,
+          "F": 19.7,
+          "G": 6.6,
+          "H": 3.3,
+          "I": 1.6
+        },
+        "action": {
+          "H": 8,
+          "K": 7
+        },
+        "outlook": {
+          "U": 3,
+          "D": 3
+        },
+        "political": 3,
+        "likes": 3
+      },
+      "2026-09-17": {
+        "n": 50,
+        "n_relevant": 39,
+        "stance_share": {
+          "N": 74.4,
+          "M": 23.1,
+          "P": 2.6
+        },
+        "irrelevant_share": 22.0,
+        "topic_share": {
+          "A": 22.0,
+          "B": 12.0,
+          "C": 8.0,
+          "D": 18.0,
+          "E": 16.0,
+          "F": 12.0,
+          "G": 2.0,
+          "H": 8.0,
+          "I": 2.0
+        },
+        "action": {
+          "H": 8,
+          "K": 1
+        },
+        "outlook": {
+          "U": 0,
+          "D": 1
+        },
+        "political": 1,
+        "likes": 4
+      },
+      "2026-09-18": {
+        "n": 32,
+        "n_relevant": 27,
+        "stance_share": {
+          "N": 66.7,
+          "M": 33.3,
+          "P": 0.0
+        },
+        "irrelevant_share": 15.6,
+        "topic_share": {
+          "A": 21.9,
+          "B": 21.9,
+          "C": 6.2,
+          "D": 21.9,
+          "E": 15.6,
+          "F": 15.6,
+          "G": 3.1,
+          "H": 15.6,
+          "I": 0.0
+        },
+        "action": {
+          "H": 7,
+          "K": 0
+        },
+        "outlook": {
+          "U": 1,
+          "D": 0
+        },
+        "political": 0,
+        "likes": 6
+      },
+      "2026-09-19": {
+        "n": 12,
+        "n_relevant": 7,
+        "stance_share": {
+          "N": 85.7,
+          "M": 14.3,
+          "P": 0.0
+        },
+        "irrelevant_share": 41.7,
+        "topic_share": {
+          "A": 8.3,
+          "B": 16.7,
+          "C": 16.7,
+          "D": 16.7,
+          "E": 0.0,
+          "F": 16.7,
+          "G": 8.3,
+          "H": 8.3,
+          "I": 0.0
+        },
+        "action": {
+          "H": 1,
+          "K": 1
+        },
+        "outlook": {
+          "U": 0,
+          "D": 0
+        },
+        "political": 1,
+        "likes": 0
+      }
+    },
+    "period": {
+      "9/13": {
+        "n": 417,
+        "n_relevant": 325,
+        "stance_share": {
+          "N": 69.5,
+          "M": 17.8,
+          "P": 12.6
+        },
+        "irrelevant_share": 22.1,
+        "topic_share": {
+          "A": 27.1,
+          "B": 14.9,
+          "C": 11.8,
+          "D": 19.9,
+          "E": 9.4,
+          "F": 11.3,
+          "G": 9.6,
+          "H": 6.7,
+          "I": 1.9
+        },
+        "action": {
+          "H": 44,
+          "K": 35
+        },
+        "outlook": {
+          "U": 9,
+          "D": 10
+        },
+        "political": 35,
+        "likes": 196
+      },
+      "9/14~15": {
+        "n": 473,
+        "n_relevant": 362,
+        "stance_share": {
+          "N": 71.3,
+          "M": 21.3,
+          "P": 7.5
+        },
+        "irrelevant_share": 23.5,
+        "topic_share": {
+          "A": 29.0,
+          "B": 16.5,
+          "C": 11.8,
+          "D": 18.6,
+          "E": 9.9,
+          "F": 13.7,
+          "G": 7.8,
+          "H": 4.7,
+          "I": 1.7
+        },
+        "action": {
+          "H": 49,
+          "K": 28
+        },
+        "outlook": {
+          "U": 7,
+          "D": 16
+        },
+        "political": 24,
+        "likes": 1461
+      },
+      "9/16~19": {
+        "n": 155,
+        "n_relevant": 113,
+        "stance_share": {
+          "N": 68.1,
+          "M": 26.5,
+          "P": 5.3
+        },
+        "irrelevant_share": 27.1,
+        "topic_share": {
+          "A": 25.2,
+          "B": 14.2,
+          "C": 9.7,
+          "D": 18.1,
+          "E": 12.9,
+          "F": 16.1,
+          "G": 4.5,
+          "H": 7.7,
+          "I": 1.3
+        },
+        "action": {
+          "H": 24,
+          "K": 9
+        },
+        "outlook": {
+          "U": 4,
+          "D": 4
+        },
+        "political": 5,
+        "likes": 13
+      }
+    },
+    "period_test": {
+      "chi2": 10.49,
+      "p": 0.033,
+      "dof": 4
+    },
+    "daily_test": {
+      "chi2": 17.57,
+      "p": 0.129,
+      "dof": 12
+    }
+  }
 }
