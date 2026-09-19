@@ -20,3 +20,4 @@ output/housing/apt_trades.csv
 
 # 채팅으로 받은 공유용 사본 (원본은 output/ 에 있음)
 Claude outputs/
+/.vscode
