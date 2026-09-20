@@ -15,13 +15,18 @@ LLM(gpt-oss-120b) 분류를 사람이 직접 한 분류와 비교해 얼마나 �
         · "기준" 시트: cy-index.txt 분류 기준 전문
   (2) 조원 2명이 파일을 복사해 각자 따로 채운다 (서로의 답, LLM 결과를 보지 않기)
       예: output/reliability_sheet_kim.xlsx, output/reliability_sheet_lee.xlsx
-  (3) 일치도 계산 — 사람 vs LLM, 사람 vs 사람을 함께 계산하고 불일치 목록을 저장
+  (3) 일치도 계산 — 시트마다 기준 LLM(gpt-oss-120b)과 비교하고, 시트끼리도 모두 짝지어 비교
       python check_reliability.py score output/reliability_sheet_kim.xlsx output/reliability_sheet_lee.xlsx
+      다른 LLM 도 같은 시트 형식으로 채워 넣으면 함께 비교된다.
+      예: output/reliability_sheet_claude.xlsx (Claude 가 같은 100개를 gpt 결과를 보지 않고 분류한 것)
+      python check_reliability.py score output/reliability_sheet_kim.xlsx output/reliability_sheet_lee.xlsx output/reliability_sheet_claude.xlsx
+      → 사람 vs gpt, 사람 vs Claude, Claude vs gpt, 사람 vs 사람을 한 표로 비교
       → 화면에 κ 표, output/reliability_disagreements.csv 에 LLM과 다르게 판단한 댓글 목록
   (4) 불일치 댓글을 조원이 함께 보고 합의한 정답을 정하면, 보고서에 κ와 함께 대표적인 오분류 유형을 적는다.
       오분류가 한쪽으로 몰리면(예: 양가를 부정으로) cy-index.txt 기준을 고치고 classify_comments.py 를 다시 돌린다.
 """
 import argparse
+import json
 from itertools import combinations
 from pathlib import Path
 
@@ -141,15 +146,18 @@ def kappa_row(a, b):
 
 def score(files, ref):
     llm = read_llm(ref)
+    log = Path(ref).parent / "classify_log.json"   # 기준 LLM 이름 (예: gpt-oss-120b)
+    model = (json.loads(log.read_text(encoding="utf-8")).get("model", "LLM").split("/")[-1]
+             if log.exists() else "LLM")
     people = {Path(f).stem.replace("reliability_sheet_", ""): read_sheet(f) for f in files}
     rows = {}
     for name, h in people.items():
-        rows[f"{name} vs LLM"] = kappa_row(h, llm[COLS])
+        rows[f"{name} vs {model}"] = kappa_row(h, llm[COLS])
     for (n1, h1), (n2, h2) in combinations(people.items(), 2):
         rows[f"{n1} vs {n2}"] = kappa_row(h1, h2)
     table = pd.DataFrame(rows).T
     pd.set_option("display.width", 200)
-    print(f"기준(LLM): {ref}")
+    print(f"기준 LLM: {model} ({ref})")
     print(table.round(3).to_string())
     print("\nκ 해석: 0.41~0.60 보통 / 0.61~0.80 상당한 일치 / 0.81 이상 거의 완전한 일치")
 
@@ -162,7 +170,7 @@ def score(files, ref):
             diff = [KOR[c] for c in COLS if r[c] != r[c + "_llm"]]
             if diff:
                 recs.append({"comment_id": cid, "코더": name, "다른 항목": ", ".join(diff), "댓글": text.get(cid, ""),
-                             **{f"{KOR[c]}(사람)": r[c] for c in COLS}, **{f"{KOR[c]}(LLM)": r[c + "_llm"] for c in COLS}})
+                             **{f"{KOR[c]}(코더)": r[c] for c in COLS}, **{f"{KOR[c]}({model})": r[c + "_llm"] for c in COLS}})
     out = BASE / "output" / "reliability_disagreements.csv"
     pd.DataFrame(recs).sort_values(["comment_id", "코더"]).to_csv(out, index=False, encoding="utf-8-sig")
     table.round(3).to_csv(BASE / "output" / "reliability_kappa.csv", encoding="utf-8-sig")

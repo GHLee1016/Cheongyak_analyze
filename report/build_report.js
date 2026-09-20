@@ -8,7 +8,7 @@
  *        node build_report.js ../output/g4h29mJufpc_20260919T063349180506Z   # 폴더를 직접 지정
  *
  * 본문 수치는 stats.json 에서 읽어 오므로, 분류를 다시 하면 보고서 수치도 자동으로 바뀐다.
- * 표 9(주택시장 지표)는 보도 자료 수치이며 출처는 data/market_indicators.csv 에 있다.
+ * 표 10(주택시장 지표)는 보도 자료 수치이며 출처는 data/market_indicators.csv 에 있다.
  * 주의: 해석 문장(순위·비교 표현)은 초안 작성 당시 데이터 기준이므로, 수치가 바뀌면 문장도 다시 확인해야 한다.
  *
  * 인용 출처 (보고서 '참고자료'에 클릭 가능한 링크로 들어감)
@@ -42,6 +42,11 @@ function latestRun() {
 const RESULTS = path.resolve(process.argv[2] || latestRun());
 console.log('입력 폴더:', RESULTS);
 const S = JSON.parse(fs.readFileSync(path.join(RESULTS, 'stats.json'), 'utf-8'));
+// 신뢰도 검증 결과 (check_reliability.py score 가 만든 output/reliability_kappa.csv, 없으면 표 생략)
+const kPath = path.join(__dirname, '..', 'output', 'reliability_kappa.csv');
+const KAPPA = fs.existsSync(kPath) ? fs.readFileSync(kPath, 'utf-8').replace(/^\uFEFF/, '').trim().split('\n').slice(1)
+  .map(line => { const c = line.split(','); return { pair: c[0], n: Number(c[1]), '태도 κ': Number(c[2]).toFixed(2),
+    '집값 전망 κ': Number(c[4]).toFixed(2), '통장 행동 κ': Number(c[6]).toFixed(2), '관심사 κ(평균)': Number(c[8]).toFixed(2) }; }) : [];
 const clPath = path.join(RESULTS, 'collection_log.json');                      // 수집 조건 기록 (collect_comments.py)
 const CL = fs.existsSync(clPath) ? JSON.parse(fs.readFileSync(clPath, 'utf-8')) : {};
 const kstTime = (iso) => { const d = new Date(new Date(iso).getTime() + 9 * 3600e3);   // UTC → 한국 시간
@@ -204,11 +209,18 @@ children.push(
   caption('표 3. 댓글 분류 기준'),
   p([b('프롬프트 설계. '), new TextRun('LLM에 입력하는 프롬프트에서는 댓글의 의미를 임의로 확대해석하지 않도록 분류 기준과 범주별 예시를 구체적으로 제시하였다. 수업 예제(ev-run.py)처럼 분류 기준을 별도 파일(cy-index.txt, 부록 1)로 분리하고, 역할 부여 → 분류 기준 → 필수 규칙 → JSON 출력 형식 순서로 구성하였다. 단순한 감탄이나 욕설처럼 청약에 대한 방향성을 확인하기 어려운 댓글은 “해당 없음”으로 처리하도록 하였다. 집값 전망은 댓글에 상승 또는 하락이 드러난 경우에만 해당 범주로 분류하여 분석자의 추측이 개입되는 것을 줄였다.')]),
   p([b('댓글 분류 방법. '), new TextRun(`댓글 ${fmt(S.n_comments)}개를 ${S.batch_size}개씩 묶어 번호를 붙여 LLM(${S.model_label})에 입력하고, 사전에 정한 기준에 따라 결과를 JSON으로 받았다. 응답은 번호로 원래 댓글과 맞췄으며, 형식이 틀리거나 빠진 댓글은 그 댓글만 다시 요청하였다. 이후 결과를 집계하여 각 태도와 관심사가 전체 댓글에서 차지하는 비중을 계산하였다. 또한 댓글 수와 함께 해당 댓글이 받은 좋아요 수를 분석하여, 댓글의 빈도와 다른 이용자들의 공감 정도가 일치하는지 비교하였다.`)]),
-  p([b('신뢰도 검증(Human-in-the-loop). '), new TextRun('LLM 분류가 사람의 판단과 얼마나 일치하는지 확인하기 위해, 분석 기간 댓글 중 무작위로 뽑은 100개를 조원 2명이 LLM 결과를 보지 않은 채 각자 같은 기준(cy-index.txt)으로 분류하였다. 이후 사람과 LLM, 사람과 사람 사이의 일치도를 Cohen’s κ로 계산하고, LLM과 판단이 달랐던 댓글은 조원이 함께 검토하여 오분류 유형을 정리하였다(check_reliability.py).')]),
-  todo('검증 결과 기입: output/reliability_kappa.csv 의 κ 값(태도·관심사·집값 전망·통장 행동)과 주요 오분류 유형을 여기에 표로 정리할 것.'),
+  p([b('신뢰도 검증(Human-in-the-loop). '), new TextRun('LLM 분류가 사람의 판단과 얼마나 일치하는지 확인하기 위해, 분석 기간 댓글 중 무작위로 뽑은 100개를 조원 2명이 LLM 결과를 보지 않은 채 각자 같은 기준(cy-index.txt)으로 분류하였다. 또한 다른 LLM인 Claude(Anthropic)에게도 gpt-oss-120b의 결과를 보여 주지 않고 같은 100개를 같은 기준으로 분류하게 하여, 사람·gpt-oss-120b·Claude 세 분류를 서로 비교하였다. 일치도는 Cohen’s κ로 계산하고, LLM과 판단이 달랐던 댓글은 조원이 함께 검토하여 오분류 유형을 정리하였다(check_reliability.py).')]),
+  ...(KAPPA.length ? [
+    table([2900, 1225, 1225, 1225, 1226, 1225], [
+      ['비교', '댓글 수', '태도 κ', '관심사 κ(평균)', '집값 전망 κ', '통장 행동 κ'],
+      ...KAPPA.map(r => [r.pair.replace('claude', 'Claude'), r.n, r['태도 κ'], r['관심사 κ(평균)'], r['집값 전망 κ'], r['통장 행동 κ']]),
+    ]),
+    caption('표 4. 분류 일치도 (Cohen’s κ, 0.61 이상 상당한 일치 / 0.81 이상 거의 완전한 일치)'),
+  ] : []),
+  todo('조원 2명의 코딩 시트(reliability_sheet_이름.xlsx)가 들어오면 check_reliability.py score 를 다시 실행해 표 4를 사람·Claude·gpt 비교로 채우고, 주요 오분류 유형을 정리할 것.'),
 
   h3('3. 주택가격 데이터'),
-  p([b('데이터 출처. '), new TextRun('댓글 속 인식과 비교할 주택시장 지표는 공공데이터포털에서 제공하는 한국부동산원·국토교통부 자료를 기본으로 하고(표 4), 최신 수치는 한국부동산원·주택도시보증공사(HUG) 통계를 인용한 언론 보도로 보완하였다(표 9).')]),
+  p([b('데이터 출처. '), new TextRun('댓글 속 인식과 비교할 주택시장 지표는 공공데이터포털에서 제공하는 한국부동산원·국토교통부 자료를 기본으로 하고(표 5), 최신 수치는 한국부동산원·주택도시보증공사(HUG) 통계를 인용한 언론 보도로 보완하였다(표 10).')]),
   table([2300, 3600, 3126], [
     ['비교할 인식', '데이터 (공공데이터포털)', '가격지표'],
     ['“다들 해지한다”', '한국부동산원 청약통장 전체 가입현황 (15088657), 청약통장 통계 조회 API (15114369)', '월별 가입자 수, 1·2순위 구성, 시도별 증감'],
@@ -217,7 +229,7 @@ children.push(
     ['“10억~20억은 있어야”', '국토교통부 아파트 매매 실거래가 상세 (15126468)', '거래금액 중위값·분위수'],
     ['“분양가가 너무 비싸다”', 'HUG 민간아파트 분양가격 동향', '3.3㎡당 평균 분양가, 전년 대비 상승률'],
   ]),
-  caption('표 4. 주택가격 데이터 구성'),
+  caption('표 5. 주택가격 데이터 구성'),
   p([b('지역. '), new TextRun('서울, 수도권(경기·인천), 지방의 세 권역으로 나누었다. 댓글에서 “서울은 로또, 지방은 청약이 필요 없다”처럼 지역을 나누는 인식이 반복되기 때문이다.')]),
   p([b('기간. '), new TextRun('청약통장 가입자가 정점을 찍은 2021년 1월부터 2026년 8월까지를 기본으로 하고, 대출 규제가 강화된 2025년 10·15 대책 전후를 구분하여 살펴본다.')]),
   p([b('가격지표. '), new TextRun('분양가(3.3㎡당), 아파트 매매가격지수 변동률, 중위 매매가격, 실거래 금액, 주택담보대출 한도를 사용한다.')]),
@@ -231,7 +243,7 @@ const ratio = (p) => (TR.period[p].action.H / Math.max(TR.period[p].action.K, 1)
 children.push(
   h2('ⅱ) 분석 결과'),
   h3('1. 정책 관련 댓글의 전반적인 반응'),
-  p(`분석 대상 댓글 ${fmt(S.n_comments)}개 가운데 ${fmt(S.n_irrelevant)}개(${pct(S.n_irrelevant, S.n_comments)}%)는 청약에 대한 판단이 없는 “해당 없음” 댓글이었다. 대부분 특정 정당이나 대통령에 대한 구호, 세대 비난, 짧은 감탄이었다. 나머지 ${fmt(S.n_relevant)}개의 태도는 표 5와 같다.`, { indent: true }),
+  p(`분석 대상 댓글 ${fmt(S.n_comments)}개 가운데 ${fmt(S.n_irrelevant)}개(${pct(S.n_irrelevant, S.n_comments)}%)는 청약에 대한 판단이 없는 “해당 없음” 댓글이었다. 대부분 특정 정당이나 대통령에 대한 구호, 세대 비난, 짧은 감탄이었다. 나머지 ${fmt(S.n_relevant)}개의 태도는 표 6과 같다.`, { indent: true }),
   table([2000, 1700, 1700, 1800, 1826], [
     ['태도', '댓글 수', '비율', '받은 좋아요', '좋아요 비중'],
     ['부정', fmt(S.stance_count.N), `${f1(S.stance_share.N)}%`, fmt(stanceLikes('N')), `${f1(S.stance_like_share.N)}%`],
@@ -239,7 +251,7 @@ children.push(
     ['긍정', fmt(S.stance_count.P), `${f1(S.stance_share.P)}%`, fmt(stanceLikes('P')), `${f1(S.stance_like_share.P)}%`],
     ['합계 (청약 관련)', fmt(S.n_relevant), '100.0%', fmt(likesRel), '100.0%'],
   ]),
-  caption(`표 5. 청약 관련 댓글의 태도 분포 (LLM 분류, ${period})`),
+  caption(`표 6. 청약 관련 댓글의 태도 분포 (LLM 분류, ${period})`),
   img(path.join(RESULTS, 'fig1_stance.png'), 600, 195),
   caption('그림 2. 태도 분포: 댓글 수 기준과 좋아요 가중 비교'),
   p(`부정적인 댓글이 ${f1(S.stance_share.N)}%로 가장 많았고, 좋아요로 가중하면 ${f1(S.stance_like_share.N)}%까지 올라간다. 다만 이 기간의 좋아요는 소수 댓글에 크게 몰려 있다. 댓글의 ${zeroLikeShare}%는 좋아요가 하나도 없고, 가장 많은 좋아요를 받은 댓글 하나(${fmt(topC.like_count)}개)가 전체 좋아요의 ${f1(S.top1_like_share)}%를, 상위 10개 댓글이 ${f1(S.top10_like_share)}%를 차지한다. 그 댓글 하나를 빼고 계산해도 부정 비중은 ${f1(S.stance_like_share_wo_top1.N)}%로 여전히 높지만, 좋아요 가중 수치는 몇 개 댓글에 따라 크게 달라질 수 있으므로 본 연구에서는 댓글 수 기준을 중심으로 해석하였다.`, { indent: true }),
@@ -249,7 +261,7 @@ children.push(
     ['관심사', '댓글 수', '전체 댓글 대비', '좋아요 비중'],
     ...topicOrder.map(k => [T[k], fmt(S.topic_count[k]), `${f1(S.topic_share[k])}%`, `${f1(S.topic_like_share[k])}%`]),
   ]),
-  caption(`표 6. 관심사별 언급 빈도와 좋아요 비중 (한 댓글에 여러 관심사가 나올 수 있어 합계는 100%를 넘음, n=${fmt(S.n_comments)})`),
+  caption(`표 7. 관심사별 언급 빈도와 좋아요 비중 (한 댓글에 여러 관심사가 나올 수 있어 합계는 100%를 넘음, n=${fmt(S.n_comments)})`),
   img(path.join(RESULTS, 'fig2_topics.png'), 600, 280),
   caption('그림 3. 관심사별 언급 비율과 좋아요 비중'),
   p(`가장 많이 언급된 관심사는 ${T[topicOrder[0]]}(${f1(S.topic_share[topicOrder[0]])}%)였다. 이어 ${T[topicOrder[1]]}(${f1(S.topic_share[topicOrder[1]])}%), ${T[topicOrder[2]]}(${f1(S.topic_share[topicOrder[2]])}%), ${T[topicOrder[3]]}(${f1(S.topic_share[topicOrder[3]])}%), ${T[topicOrder[4]]}(${f1(S.topic_share[topicOrder[4]])}%) 순이었다. 댓글들은 대체로 “분양가가 너무 높아 당첨돼도 살 수 없고, 대출은 막혀 있으며, 당첨 조건은 1인가구나 평범한 직장인에게 불리하다”는 하나의 논리로 이 요소들을 묶었다. 댓글에서 언급된 금액(“○억”) ${S.amount_mentions}건의 중앙값은 ${S.amount_median_eok}억 원이었다.`, { indent: true }),
@@ -266,12 +278,12 @@ children.push(
     ['청약통장 해지', fmt(S.action.H), `주된 이유: 대체 투자·낮은 금리(${RC('대체 투자·낮은 금리')}건), 분양가·집값 부담(${RC('분양가·집값 부담')}건), 대출규제(${RC('대출규제·자금조달')}건)`],
     ['청약통장 유지', fmt(S.action.K), `주된 이유: 임대·대출우대 등 부가 기능(${RK('임대·대출우대 등 부가 기능')}건), 소득공제·적금 기능(${RK('대체 투자·낮은 금리')}건)`],
   ]),
-  caption('표 7. 집값 전망과 청약통장 행동 의향 (한 댓글이 여러 이유를 말할 수 있음)'),
+  caption('표 8. 집값 전망과 청약통장 행동 의향 (한 댓글이 여러 이유를 말할 수 있음)'),
   p(`집값 방향을 말한 댓글은 ${S.outlook.U + S.outlook.D}개(${f1(S.outlook_share)}%)뿐이었다. 대부분의 댓글은 가격이 오를지 내릴지가 아니라 “이미 감당할 수 없다”는 현재 수준을 말했다. 전망을 밝힌 댓글 중에는 하락(${S.outlook.D}개)이 상승(${S.outlook.U}개)보다 많았지만, 하락 댓글의 상당수는 구체적인 예측이라기보다 가격이 내려가기를 바라는 마음이나 인구 감소에 따른 장기적 전망이었다.`, { indent: true }),
   p(`청약통장에 대해서는 해지 의향(${S.action.H}개)이 유지 의향(${S.action.K}개)보다 많았다. 해지한 사람들은 주식·ETF 같은 다른 투자처와 분양가 부담을 주로 들었다. 유지하는 사람들도 내 집 마련 수단이라기보다 LH·SH 임대주택 가점, 디딤돌 대출 금리우대, 소득공제 같은 부가 혜택 때문에 통장을 두고 있다고 답했다.`, { indent: true }),
 
   h3('4. 일주일 동안의 반응 변화'),
-  p(`분석 기간 7일 동안 댓글 수는 첫날(9월 13일) ${TR.daily['2026-09-13'].n}개로 가장 많았고, 9월 14~15일 ${TR.period['9/14~15'].n}개를 거쳐 9월 16일 이후에는 하루 12~61개로 줄었다(그림 4). 날짜별 댓글 수 차이가 커서 하루 단위 비율은 뒤로 갈수록 흔들리므로, 규모가 비슷하도록 첫날, 둘째·셋째 날, 나머지 나흘의 세 구간으로 묶어 비교하였다(표 8).`, { indent: true }),
+  p(`분석 기간 7일 동안 댓글 수는 첫날(9월 13일) ${TR.daily['2026-09-13'].n}개로 가장 많았고, 9월 14~15일 ${TR.period['9/14~15'].n}개를 거쳐 9월 16일 이후에는 하루 12~61개로 줄었다(그림 4). 날짜별 댓글 수 차이가 커서 하루 단위 비율은 뒤로 갈수록 흔들리므로, 규모가 비슷하도록 첫날, 둘째·셋째 날, 나머지 나흘의 세 구간으로 묶어 비교하였다(표 9).`, { indent: true }),
   img(path.join(RESULTS, 'fig4_daily_trend.png'), 600, 390),
   caption('그림 4. 날짜별 댓글 수와 태도 비중 (청약 관련 댓글 기준)'),
   table([2600, 2142, 2142, 2142], [
@@ -286,7 +298,7 @@ children.push(
     ['대체 투자 언급 (전체 대비)', ...PER.map(p => `${f1(TR.period[p].topic_share.E)}%`)],
     ['부가 기능 언급 (전체 대비)', ...PER.map(p => `${f1(TR.period[p].topic_share.G)}%`)],
   ]),
-  caption(`표 8. 구간별 태도와 주요 지표 변화 (태도 비중은 청약 관련 댓글 기준)${TR.period_test ? ` — 태도×구간 카이제곱 검정 χ²=${TR.period_test.chi2}, p=${TR.period_test.p}` : ''}`),
+  caption(`표 9. 구간별 태도와 주요 지표 변화 (태도 비중은 청약 관련 댓글 기준)${TR.period_test ? ` — 태도×구간 카이제곱 검정 χ²=${TR.period_test.chi2}, p=${TR.period_test.p}` : ''}`),
   p(`부정적 반응은 세 구간 모두 ${f1(Math.min(...PER.map(p => TR.period[p].stance_share.N)))}~${f1(Math.max(...PER.map(p => TR.period[p].stance_share.N)))}%로 거의 변하지 않았다. 변화는 나머지 두 반응 사이에서 나타났다. 긍정적 반응은 ${f1(TR.period['9/13'].stance_share.P)}% → ${f1(TR.period['9/14~15'].stance_share.P)}% → ${f1(TR.period['9/16~19'].stance_share.P)}%로 줄었고, 양가적 반응은 ${f1(TR.period['9/13'].stance_share.M)}% → ${f1(TR.period['9/14~15'].stance_share.M)}% → ${f1(TR.period['9/16~19'].stance_share.M)}%로 늘었다.${TR.period_test ? ` 구간과 태도의 관계는 통계적으로도 유의하였다(χ²=${TR.period_test.chi2}, 자유도 ${TR.period_test.dof}, p=${TR.period_test.p}). 다만 7일을 하루 단위로 나누면 뒤쪽 날짜의 댓글이 적어 유의하지 않았다(p=${TR.daily_test.p}).` : ''}`, { indent: true }),
   p(`즉 시간이 지나면서 청약을 부정하는 목소리는 그대로인 채, “그래도 깨지 마라”는 유지 권유가 줄고 “소득공제 때문에 둔다”, “최소 금액만 넣는다”처럼 효용을 따져 보는 양가적 댓글이 늘었다. 청약통장 해지 의향은 유지 의향의 ${ratio('9/13')}배(${TR.period['9/13'].action.H}대 ${TR.period['9/13'].action.K})에서 마지막 나흘 ${ratio('9/16~19')}배(${TR.period['9/16~19'].action.H}대 ${TR.period['9/16~19'].action.K})로 벌어졌다. 유지의 근거로 쓰이던 임대 가점·금리우대 같은 부가 기능 언급도 ${f1(TR.period['9/13'].topic_share.G)}%에서 ${f1(TR.period['9/16~19'].topic_share.G)}%로 줄었다.`, { indent: true }),
   p(`정치인·정당을 직접 언급한 댓글은 첫날 ${TR.period['9/13'].political}개(${pct(TR.period['9/13'].political, TR.period['9/13'].n)}%)로 몰렸다가 마지막 나흘에는 ${TR.period['9/16~19'].political}개(${pct(TR.period['9/16~19'].political, TR.period['9/16~19'].n)}%)로 줄었다. 반면 정부·정치 불신 전체 비중(${f1(TR.period['9/13'].topic_share.F)}% → ${f1(TR.period['9/16~19'].topic_share.F)}%)과 대체 투자 언급(${f1(TR.period['9/13'].topic_share.E)}% → ${f1(TR.period['9/16~19'].topic_share.E)}%)은 조금씩 늘었다. 특정 정치인을 겨냥한 구호는 초반에 집중되고, 뒤로 갈수록 제도 전반에 대한 불신과 “청약 대신 투자” 같은 개인적 대안이 남는 양상이다. 분양가·대출·가점·제도 불공정 같은 핵심 관심사의 비중은 기간 내내 큰 변화가 없었다.`, { indent: true }),
@@ -301,7 +313,7 @@ children.push(
     ['지방 아파트 매매가격', '9월 1주: 4대 광역시 +0.01%, 세종 −0.02%', '한국부동산원'],
     ['청약통장 가입자', '2021년 약 2,677만 명 → 2026년 6월 2,471만 명\n2026년 1~7월 순감 32만 9천 좌', '국토교통부 자료(뉴스핌 보도)'],
   ]),
-  caption('표 9. 주요 주택시장 지표 (보도 자료 기준)'),
+  caption('표 10. 주요 주택시장 지표 (보도 자료 기준)'),
   p('2025년 10·15 대책으로 서울 전역과 경기 12곳이 규제지역으로 지정되고 주택담보대출 한도가 줄었지만, 서울 아파트 매매가격은 2026년 들어서도 8월까지 7.52% 올랐다. 분양가는 매매가격보다 더 빠르게 올라 서울 민간아파트 분양가가 1년 새 34.2% 상승했다. 반면 지방은 4대 광역시가 보합, 세종이 소폭 하락하는 등 서울과의 격차가 커지고 있다. 대출 한도가 묶인 상태에서 가격이 오르면서, 전용 84㎡ 기준으로는 대출 4억 원을 받아도 약 18억 원의 현금이 필요한 상황이다.', { indent: true }),
   todo('공공데이터포털 원자료(housing_data.py)로 2021~2026년 월별 시계열 그래프를 추가하고, 10·15 대책 전후 12개월을 비교할 것: ① 청약통장 가입자 수 ② 권역별 중위매매가격 ③ 서울·경기·지방 실거래가 중위값.'),
 
@@ -315,7 +327,7 @@ children.push(
     [`“지방은 청약이 필요 없다” (${f1(S.topic_share.H)}%)`, '지방 매매가 보합·하락, 서울만 상승', '일치', '미분양 통계로 보강 필요'],
     [`집값 전망 (${f1(S.outlook_share)}%, 하락 ${S.outlook.D} > 상승 ${S.outlook.U})`, '서울 누적 +7.52%로 상승 지속', '불일치', '하락 댓글 다수가 예측보다 바람·가정'],
   ]),
-  caption('표 10. 댓글 속 인식과 주택시장 지표 비교'),
+  caption('표 11. 댓글 속 인식과 주택시장 지표 비교'),
   p('정리하면, 댓글이 청약을 부정적으로 보는 근거인 고분양가, 대출 한도, 가점 구조, 지역 간 격차는 실제 시장 지표와 대체로 일치하였다. 이용자들이 막연한 불만이 아니라 현재의 가격과 제도 아래에서 청약이 자신에게 어떤 의미인지를 비교적 정확하게 판단하고 있다는 뜻이다. 반면 집값의 방향에 대해서는 댓글 여론(하락 우세)과 실제 시장(서울 상승 지속)이 어긋났다. “대출이 전혀 안 된다”, “모두 해지한다”처럼 규모를 부풀리는 표현도 있었다.', { indent: true }),
 );
 
