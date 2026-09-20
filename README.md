@@ -13,6 +13,24 @@
 | 분류 기준 | [`cy-index.txt`](cy-index.txt) — 태도 · 관심사 · 집값 전망 · 통장 행동 |
 | 결과 폴더 | [`output/g4h29mJufpc_20260919T063349180506Z/`](output/g4h29mJufpc_20260919T063349180506Z/) |
 
+## 보고서 ↔ 파일 대응표
+
+보고서의 표·그림 번호별로 근거가 되는 파일과 그 파일을 만든 코드입니다. 댓글 원문과 분류 결과는 [`분류결과_0913-0919.csv`](output/g4h29mJufpc_20260919T063349180506Z/%EB%B6%84%EB%A5%98%EA%B2%B0%EA%B3%BC_0913-0919.csv)(한글 표기, 좋아요순)에서 바로 볼 수 있습니다.
+
+| 보고서 | 내용 | 근거 파일 | 만든 코드 |
+|---|---|---|---|
+| 표 1 | 댓글 데이터 개요 (수집량 2,156 / 분석 대상 1,045) | [`comments.csv`](output/g4h29mJufpc_20260919T063349180506Z/comments.csv), [`collection_log.json`](output/g4h29mJufpc_20260919T063349180506Z/collection_log.json) | [`collect_comments.py`](collect_comments.py) |
+| 표 2 · 그림 1 | 수집 요청 조건과 수집 흐름 (execute, nextPageToken, comment_id) | [`fig_collect_flow.png`](report/fig_collect_flow.png) | [`collect_comments.py`](collect_comments.py) |
+| 2.2절 | LLM 분류 기준과 절차 | [`cy-index.txt`](cy-index.txt), [`classify_log.json`](output/g4h29mJufpc_20260919T063349180506Z/classify_log.json) | [`classify_comments.py`](classify_comments.py) |
+| 표 3 · 표 4 | 분류 신뢰도 (사람·Claude·gpt-oss-120b κ, 분류자별 태도 분포) | [`reliability_kappa.csv`](output/reliability_kappa.csv), [`reliability_disagreements.csv`](output/reliability_disagreements.csv), 코딩 시트 [`팀원1`](output/reliability_sheet_%ED%8C%80%EC%9B%901.xlsx) · [`claude`](output/reliability_sheet_claude.xlsx) | [`check_reliability.py`](check_reliability.py) |
+| 표 5 | 단계별 건수 대조 (수집 기록 · CSV · DB) | [`verify_counts.json`](output/g4h29mJufpc_20260919T063349180506Z/verify_counts.json), [DB 대시보드](https://ghlee1016.github.io/Chungyak_analyze/) | [`verify_counts.py`](verify_counts.py), [`upload_supabase.py`](upload_supabase.py) |
+| 표 6 | 태도 분포 | [`stats.json`](output/g4h29mJufpc_20260919T063349180506Z/stats.json), [`분류결과_0913-0919.csv`](output/g4h29mJufpc_20260919T063349180506Z/%EB%B6%84%EB%A5%98%EA%B2%B0%EA%B3%BC_0913-0919.csv) | [`analyze_comments.py`](analyze_comments.py) |
+| 표 7 · 그림 2 | 관심사별 언급 빈도와 좋아요 비중 | [`topic_summary.csv`](output/g4h29mJufpc_20260919T063349180506Z/topic_summary.csv), [`fig2_topics.png`](output/g4h29mJufpc_20260919T063349180506Z/fig2_topics.png) | [`analyze_comments.py`](analyze_comments.py) |
+| 3.3절 | 집값 전망 · 통장 행동, 해지·유지 이유 | [`stats.json`](output/g4h29mJufpc_20260919T063349180506Z/stats.json) (`action_by_stance`, `reasons_cancel`, `reasons_keep`) | [`analyze_comments.py`](analyze_comments.py) |
+| 표 8 · 그림 3 | 일주일 동안의 반응 변화, 카이제곱 검정 | [`stats.json`](output/g4h29mJufpc_20260919T063349180506Z/stats.json) (`trend`), [`fig4_daily_trend.png`](output/g4h29mJufpc_20260919T063349180506Z/fig4_daily_trend.png) | [`analyze_comments.py`](analyze_comments.py) |
+| 표 9 · 4장 | 주택시장 지표 비교 계획 | [`market_indicators.csv`](data/market_indicators.csv), [`data/manual/`](data/manual/README.md) | [`housing_data.py`](housing_data.py) |
+| 각주 1 · 2 | 코드 저장소, Supabase DB | 이 저장소, [DB 대시보드](https://ghlee1016.github.io/Chungyak_analyze/) (`docs/index.html`) |  |
+
 ## 실행 순서
 
 ```bash
@@ -35,7 +53,8 @@ python analyze_comments.py
 |---|---|
 | `comments.csv`, `collection_log.json` | ① 수집 |
 | `classified.csv`, `classify_log.json` | ② 분류 |
-| `stats.json`, `topic_summary.csv`, `fig1_stance.png`, `fig2_topics.png` | ③ 집계 |
+| `stats.json`, `topic_summary.csv`, `fig1_stance.png`, `fig2_topics.png`, `fig4_daily_trend.png` | ③ 집계 |
+| `분류결과_0913-0919.csv` | 공유용: `classified.csv` 중 9/13~19 댓글 1,045개를 한글 표기(태도·관심사·전망·행동)로 바꾸고 좋아요순으로 정렬. `comment_id`로 원본과 연결 |
 
 ### 추가 단계
 
