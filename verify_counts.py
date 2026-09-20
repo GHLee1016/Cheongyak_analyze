@@ -1,7 +1,7 @@
 """CNT3054 청약 인식 프로젝트(B안): 단계별 건수 대조 (CSV · 로그 · Supabase DB)
 
 수집 → 분류 → DB 저장 단계마다 댓글 수가 맞는지, 중복 저장이 없는지 한 번에 확인한다.
-결과는 결과 폴더의 verify_counts.json 에 저장되고, 보고서(report/build_report.js)가 이 파일을 읽어 표로 넣는다.
+결과는 결과 폴더의 verify_counts.json 에 저장되고, 보고서 표 5의 근거가 된다.
 
   확인 항목
     1. collection_log.json 의 받은 댓글 수 · 중복 제외 수 · 저장 수  vs  comments.csv 행 수

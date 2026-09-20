@@ -2,7 +2,7 @@
 
 > **연구 질문:** 청약에 대한 사람들의 인식은 실제 주택시장 상황과 어떤 관계가 있는가?
 
-수업에서 받은 댓글 수집 코드(`collect_comments.py`)와 원본 저장소([111usionBin/jtbc-2025](https://github.com/111usionBin/jtbc-2025))의 LLM 분석 코드(`llm-ev.py`, `ev-run.py`)를 바탕으로, 유튜브 댓글 수집 → LLM 분류 → 집계 → 주택시장 지표 비교 → 보고서 생성까지 이어지도록 수정·추가했습니다.
+수업에서 받은 댓글 수집 코드(`collect_comments.py`)와 원본 저장소([111usionBin/jtbc-2025](https://github.com/111usionBin/jtbc-2025))의 LLM 분석 코드(`llm-ev.py`, `ev-run.py`)를 바탕으로, 유튜브 댓글 수집 → LLM 분류 → 집계 → Supabase 저장 → 주택시장 지표 비교까지 이어지도록 수정·추가했습니다.
 
 | 구분 | 내용 |
 |---|---|
@@ -27,18 +27,15 @@ python classify_comments.py
 # ③ 집계·그림 (기본: 2026-09-13~19 댓글만)
 python analyze_comments.py
 
-# ④ 보고서 초안(.docx) — Node.js 필요
-cd report && npm install && node build_report.js && cd ..
 ```
 
-②~④는 경로를 주지 않으면 `output/`에서 가장 최근 폴더를 자동으로 찾습니다. 결과는 모두 같은 폴더에 쌓입니다.
+②·③은 경로를 주지 않으면 `output/`에서 가장 최근 폴더를 자동으로 찾습니다. 결과는 모두 같은 폴더에 쌓입니다.
 
 | 파일 | 만드는 단계 |
 |---|---|
 | `comments.csv`, `collection_log.json` | ① 수집 |
 | `classified.csv`, `classify_log.json` | ② 분류 |
 | `stats.json`, `topic_summary.csv`, `fig1_stance.png`, `fig2_topics.png` | ③ 집계 |
-| `청약인식_보고서초안_B안.docx` | ④ 보고서 |
 
 ### 추가 단계
 
@@ -59,7 +56,7 @@ python upload_supabase.py             # 2026-09-13~19 댓글과 분류 결과를
 ```
 
 ```bash
-python verify_counts.py               # 수집 기록 · CSV · Supabase 건수 대조, 중복 comment_id 확인 → verify_counts.json (보고서 표 3)
+python verify_counts.py               # 수집 기록 · CSV · Supabase 건수 대조, 중복 comment_id 확인 → verify_counts.json (보고서 표 5)
 python verify_counts.py --no-db       # 파일끼리만 대조
 ```
 
@@ -100,8 +97,8 @@ python verify_counts.py --no-db       # 파일끼리만 대조
 | `housing_data.py` | 실거래가 API 수집, 공공데이터 파일 정리 | 신규 |
 | `verify_counts.py` | 수집 기록 · CSV · DB 건수 대조, 중복 저장 확인 | 신규 |
 | `upload_supabase.py` | 분류 결과와 실행 정보를 Supabase에 저장 | 원본 [`llm-ev.py`](https://github.com/111usionBin/jtbc-2025/blob/master/llm-ev.py)의 DB 저장 방식 |
-| `report/build_report.js` | 보고서 초안 생성 (`stats.json` 수치 자동 반영) | 신규 |
-| `data/market_indicators.csv` | 보고서 표 12 시장 지표와 출처 링크(`source_url` 열) | |
+| `report/fig_collect_flow.png` | 보고서 그림 1 (댓글 수집 흐름) | |
+| `data/market_indicators.csv` | 보도 자료의 시장 지표와 출처 링크(`source_url` 열) | |
 | `data/manual/` | 공공데이터 파일을 넣는 곳 (안내: [`data/manual/README.md`](data/manual/README.md)) | |
 
 ## 주택시장 데이터 출처

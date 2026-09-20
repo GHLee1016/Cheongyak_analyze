@@ -11,7 +11,7 @@ classify_comments.py 가 만든 classified.csv 를 읽어 보고서(Ⅱ-ⅱ 1~3�
     python analyze_comments.py --all-dates                       # 기간 필터 끄기 (기본: 2026-09-13~19)
 
   출력 (입력 CSV 와 같은 폴더)
-    stats.json          보고서에 들어가는 모든 수치 (report/build_report.js 가 읽음)
+    stats.json          보고서에 들어가는 모든 수치의 기준
     topic_summary.csv   관심사별 언급 비율 · 좋아요 점유율
     fig1_stance.png     그림 1. 태도 분포 (댓글 수 기준 vs 좋아요 가중)
     fig2_topics.png     그림 2. 관심사별 언급 비율과 좋아요 점유율

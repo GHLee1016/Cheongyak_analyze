@@ -18,7 +18,7 @@
     https://www.data.go.kr/data/15114369/openapi.do
     요청 주소는 포털의 '활용명세(Swagger)'에서 확인해 .env 의 SUBSCRIPTION_API_URL 에 넣는다.
 
-(4) 보고서 표 4의 최신 지표(분양가·대출규제 등)는 언론 보도에서 가져왔고,
+(4) 보고서에 인용한 최신 지표(분양가·대출규제 등)는 언론 보도에서 가져왔고,
     각 수치의 출처 링크를 data/market_indicators.csv 의 source_url 열에 적어 두었다.
 
 실행 : python src/03_collect_housing_data.py --start 202101 --end 202608
