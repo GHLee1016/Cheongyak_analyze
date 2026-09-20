@@ -9,7 +9,7 @@
   페이지를 열 때마다 Supabase REST API 에서 cheongyak_comments / cheongyak_runs 를 직접 읽어 집계한다.
   - 키: publishable(공개용) 키. 두 테이블은 RLS 로 읽기(SELECT)만 허용
   - REST API 문서: https://supabase.com/docs/guides/api
-  - 코드 저장소: https://github.com/GHLee1016/Chungyak_analyze
+  - 코드 저장소: https://github.com/GHLee1016/Cheongyak_analyze
 -->
 <style>
 :root{
@@ -112,7 +112,7 @@ a{color:var(--accent)}
 <script>
 const PROJECT = 'https://evfplzqpewwjtttlmvxc.supabase.co';
 const KEY = 'sb_publishable_Z3P3DWzEzLeL7BAhArEotQ_hptLYysY';   // 공개용 키 (RLS 로 읽기만 허용)
-const REPO = 'https://github.com/GHLee1016/Chungyak_analyze';
+const REPO = 'https://github.com/GHLee1016/Cheongyak_analyze';
 const STANCE = {N:'부정', M:'양가', P:'긍정', X:'해당 없음'};
 const TOPIC = {A:'분양가·집값 부담', B:'대출규제·자금조달', C:'가점·당첨확률', D:'제도 불공정', E:'대체 투자·낮은 금리',
                F:'정부·정치 불신', G:'임대·대출우대 등 부가 기능', H:'수도권 집중·지방·인구', I:'신축 품질·하자'};
