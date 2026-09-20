@@ -58,6 +58,13 @@ python upload_supabase.py --dry-run   # 올릴 행 수만 확인
 python upload_supabase.py             # 2026-09-13~19 댓글과 분류 결과를 올림
 ```
 
+```bash
+python verify_counts.py               # 수집 기록 · CSV · Supabase 건수 대조, 중복 comment_id 확인 → verify_counts.json (보고서 표 3)
+python verify_counts.py --no-db       # 파일끼리만 대조
+```
+
+Supabase 프로젝트: <https://supabase.com/dashboard/project/evfplzqpewwjtttlmvxc> (프로젝트 멤버만 열람 가능)
+
 `.env`의 `SUPABASE_CONNECTION_STRING`으로 접속합니다(원본 `llm-ev.py`와 같은 방식). 테이블은 없으면 자동으로 만들고, 같은 댓글은 덮어써서 여러 번 실행해도 중복되지 않습니다.
 
 | 테이블 | 내용 |
@@ -86,9 +93,10 @@ python upload_supabase.py             # 2026-09-13~19 댓글과 분류 결과를
 | `analyze_comments.py` | 집계, 그림, `stats.json` | 신규 |
 | `check_reliability.py` | 사람 분류와의 일치도(κ) 계산 | 신규 |
 | `housing_data.py` | 실거래가 API 수집, 공공데이터 파일 정리 | 신규 |
+| `verify_counts.py` | 수집 기록 · CSV · DB 건수 대조, 중복 저장 확인 | 신규 |
 | `upload_supabase.py` | 분류 결과와 실행 정보를 Supabase에 저장 | 원본 [`llm-ev.py`](https://github.com/111usionBin/jtbc-2025/blob/master/llm-ev.py)의 DB 저장 방식 |
 | `report/build_report.js` | 보고서 초안 생성 (`stats.json` 수치 자동 반영) | 신규 |
-| `data/market_indicators.csv` | 보고서 표 4 시장 지표와 출처 링크(`source_url` 열) | |
+| `data/market_indicators.csv` | 보고서 표 12 시장 지표와 출처 링크(`source_url` 열) | |
 | `data/manual/` | 공공데이터 파일을 넣는 곳 (안내: [`data/manual/README.md`](data/manual/README.md)) | |
 
 ## 주택시장 데이터 출처

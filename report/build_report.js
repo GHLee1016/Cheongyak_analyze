@@ -8,7 +8,7 @@
  *        node build_report.js ../output/g4h29mJufpc_20260919T063349180506Z   # 폴더를 직접 지정
  *
  * 본문 수치는 stats.json 에서 읽어 오므로, 분류를 다시 하면 보고서 수치도 자동으로 바뀐다.
- * 표 11(주택시장 지표)는 보도 자료 수치이며 출처는 data/market_indicators.csv 에 있다.
+ * 표 12(주택시장 지표)는 보도 자료 수치이며 출처는 data/market_indicators.csv 에 있다.
  * 주의: 해석 문장(순위·비교 표현)은 초안 작성 당시 데이터 기준이므로, 수치가 바뀌면 문장도 다시 확인해야 한다.
  *
  * 인용 출처 (보고서 '참고자료'에 클릭 가능한 링크로 들어감)
@@ -27,7 +27,7 @@ const path = require('path');
 const {
   Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableRow, TableCell,
   WidthType, ShadingType, BorderStyle, ImageRun, LevelFormat, PageNumber, Footer,
-  TableOfContents, PageBreak, ExternalHyperlink,
+  TableOfContents, PageBreak, ExternalHyperlink, FootnoteReferenceRun,
 } = require('docx');
 
 // stats.json 이 있는 폴더: 인자로 주거나, 생략하면 output/ 에서 가장 최근에 분석한 폴더를 쓴다
@@ -47,6 +47,12 @@ const kPath = path.join(__dirname, '..', 'output', 'reliability_kappa.csv');
 const KAPPA = fs.existsSync(kPath) ? fs.readFileSync(kPath, 'utf-8').replace(/^\uFEFF/, '').trim().split('\n').slice(1)
   .map(line => { const c = line.split(','); return { pair: c[0], n: Number(c[1]), '태도 κ': Number(c[2]).toFixed(2),
     '집값 전망 κ': Number(c[4]).toFixed(2), '통장 행동 κ': Number(c[6]).toFixed(2), '관심사 κ(평균)': Number(c[8]).toFixed(2) }; }) : [];
+// 단계별 건수 대조 결과 (verify_counts.py 가 만든 verify_counts.json, 없으면 표 생략)
+const vcPath = path.join(RESULTS, 'verify_counts.json');
+const VC = fs.existsSync(vcPath) ? JSON.parse(fs.readFileSync(vcPath, 'utf-8')) : null;
+// 각주 링크 (코드 저장소, 데이터베이스)
+const GITHUB_URL = 'https://github.com/GHLee1016/Chungyak_analyze';
+const SUPABASE_URL = 'https://supabase.com/dashboard/project/evfplzqpewwjtttlmvxc';
 const clPath = path.join(RESULTS, 'collection_log.json');                      // 수집 조건 기록 (collect_comments.py)
 const CL = fs.existsSync(clPath) ? JSON.parse(fs.readFileSync(clPath, 'utf-8')) : {};
 const kstTime = (iso) => { const d = new Date(new Date(iso).getTime() + 9 * 3600e3);   // UTC → 한국 시간
@@ -162,7 +168,7 @@ children.push(
   h3('1. 유튜브 댓글 데이터'),
   p([b('분석 영상. '), new TextRun('본 연구는 부동산 정책과 청약 제도를 주요 내용으로 다루는 유튜브 영상을 분석 대상으로 선정하였다. 해당 영상은 청약통장 및 주택시장과 관련된 청년들의 인식을 다루고 있으며, 댓글을 통해 정책에 대한 의견이 활발하게 나타난다는 점을 고려하였다. 분석 대상 영상은 「청약통장 다들 왜 깨고 있을까?」(크랩, 2026년 9월 11일 게시, https://www.youtube.com/watch?v=g4h29mJufpc)이다.')]),
   p([b('영상 선정 기준. '), new TextRun(`영상 선정 과정에서는 연구 주제와의 관련성을 가장 중요한 기준으로 설정하였다. 또한 정책에 대한 이용자들의 의견을 확인할 수 있을 만큼 댓글이 충분한지를 확인하여, 답글을 포함해 약 3,000개 이상의 댓글(수집 시점 기준 최상위 댓글 ${fmt(S.n_collected)}개, 답글 포함 ${fmt(S.n_collected_with_replies)}개)이 달린 영상을 선정하였다.`)]),
-  p([b('유튜브 API를 활용한 댓글 수집. '), new TextRun(`댓글은 수업에서 제공된 수집 코드(collect_comments.py)로 YouTube Data API v3의 commentThreads.list 기능을 호출하여 수집하였다. 댓글 본문과 함께 작성 시점, 좋아요 수, 답글 수를 저장하였으며, 답글 본문은 제외하였다. 수집된 최상위 댓글 ${fmt(S.n_collected)}개 가운데 분석 기간인 ${period}(한국 시간)에 작성된 ${fmt(S.n_comments)}개를 분석에 사용하였다. 댓글의 좋아요 수는 댓글 개수만으로는 파악하기 어려운 이용자들의 공감 정도를 보조적으로 확인하는 지표로 활용하였다.`)]),
+  p([b('유튜브 API를 활용한 댓글 수집. '), new TextRun('댓글은 수업에서 제공된 수집 코드(collect_comments.py)를 수정하여'), new FootnoteReferenceRun(1), new TextRun(` YouTube Data API v3의 commentThreads.list 기능을 호출하여 수집하였다. 댓글 본문과 함께 작성 시점, 좋아요 수, 답글 수를 저장하였으며, 답글 본문은 제외하였다. 수집된 최상위 댓글 ${fmt(S.n_collected)}개 가운데 분석 기간인 ${period}(한국 시간)에 작성된 ${fmt(S.n_comments)}개를 분석에 사용하였다. 댓글의 좋아요 수는 댓글 개수만으로는 파악하기 어려운 이용자들의 공감 정도를 보조적으로 확인하는 지표로 활용하였다.`)]),
   table([2200, 6826], [
     ['항목', '내용'],
     ['분석 영상', '「청약통장 다들 왜 깨고 있을까?」 (크랩, 영상 ID g4h29mJufpc, 2026.9.11 게시)'],
@@ -190,12 +196,34 @@ children.push(
   p([b('③ comment_id: 댓글을 구분하는 고유 번호. '), new TextRun('각 댓글에는 YouTube가 부여한 고유 식별자(comment_id, 예: Ugw_4FGE1HgqTyKv8k14AaABAg)가 있다. 본 연구에서 comment_id는 세 가지 역할을 하였다.')]),
   bullet([b('중복 제거: '), new TextRun(`페이지를 넘기는 사이에 새 댓글이 달리면 같은 댓글이 두 페이지에 걸쳐 나올 수 있다. 수집 코드는 이미 받은 comment_id를 기록해 두고 같은 번호가 다시 나오면 건너뛰었다. 이번 수집에서 중복으로 제외된 댓글은 ${CL.duplicates_skipped ?? '-'}개였다.`)]),
   bullet([b('분석 결과 연결: '), new TextRun('LLM 분류 결과, 사람이 직접 분류한 신뢰도 검증 시트, 원문 데이터를 comment_id로 서로 맞춰 합쳤다. 댓글 본문이나 순서가 아닌 고유 번호로 연결하므로 행이 밀리거나 섞이지 않는다.')]),
-  bullet([b('데이터베이스 저장: '), new TextRun('Supabase의 cheongyak_comments 테이블에서 comment_id를 기본 키(primary key)로 사용하였다. 같은 댓글을 다시 올리면 새 행을 추가하지 않고 기존 행을 갱신하므로, 여러 번 실행해도 데이터가 중복되지 않는다.')]),
+  bullet([b('데이터베이스 저장: '), new TextRun('Supabase의 cheongyak_comments 테이블에서 comment_id를 기본 키(primary key)로 사용하였다. 같은 댓글을 다시 올리면 새 행을 추가하지 않고 기존 행을 갱신한다(자세한 내용은 ⑤ 중복 저장 방지).')]),
   p([b('④ 수집 기록. '), new TextRun(`수집할 때마다 새 폴더(output/영상ID_수집시각/)를 만들어 원문 CSV(comments.csv)와 수집 조건 기록(collection_log.json)을 함께 저장하였다. 기록에는 요청·응답 페이지 수(${CL.pages_requested ?? '-'}/${CL.pages_received ?? '-'}), 받은 댓글 수(${fmt(CL.received_items ?? S.n_collected)}), 중복 제외 수(${CL.duplicates_skipped ?? '-'}), 종료 이유(${CL.stop_reason ?? '-'}), 수집 시각(${CL.collected_at ? kstTime(CL.collected_at) : '-'})이 남아 있어 같은 조건으로 수집을 재현할 수 있다.`)]),
+  p([b('⑤ 데이터 저장과 건수 검증. '), new TextRun('수집한 댓글은 CSV 파일로 저장한 뒤, LLM 분류 결과와 함께 Supabase(PostgreSQL 데이터베이스)'), new FootnoteReferenceRun(2), new TextRun('의 cheongyak_comments 테이블(댓글 1개 = 1행)과 cheongyak_runs 테이블(수집·분류 실행 1회 = 1행)에 올렸다(upload_supabase.py). 단계를 거치는 동안 댓글이 빠지거나 두 번 들어가지 않았는지 확인하기 위해, 수집 기록·CSV 파일·데이터베이스의 건수를 서로 대조하였다(verify_counts.py, 표 3).')]),
+  ...(VC ? [
+    table([1700, 4300, 1826, 1200], [
+      ['단계', '확인 대상', '건수', '결과'],
+      ['수집', 'collection_log.json: 받은 댓글 / 중복 제외 / 저장', `${fmt(VC.log_received_items)} / ${fmt(VC.log_duplicates_skipped)} / ${fmt(VC.log_saved_rows)}`, (VC.log_received_items - VC.log_duplicates_skipped === VC.log_saved_rows) ? '일치' : '확인 필요'],
+      ['원문 저장', 'comments.csv: 행 수 / 고유 comment_id 수', `${fmt(VC.comments_csv_rows)} / ${fmt(VC.comments_csv_unique_ids)}`, (VC.comments_csv_rows === VC.log_saved_rows && VC.comments_csv_rows === VC.comments_csv_unique_ids) ? '일치' : '확인 필요'],
+      ['LLM 분류', 'classify_log.json: 분류 / 실패, classified.csv 행 수', `${fmt(VC.classify_log_n_comments)} / ${fmt(VC.classify_log_n_failed)}, ${fmt(VC.classified_csv_rows)}`, (VC.classified_csv_rows === VC.comments_csv_rows && !VC.classify_log_n_failed) ? '일치' : '확인 필요'],
+      ['분석 기간', `${period} 작성 댓글 / 분류 완료`, `${fmt(VC.period_rows)} / ${fmt(VC.period_classified)}`, VC.period_rows === VC.period_classified ? '일치' : '확인 필요'],
+      ['DB 저장', 'Supabase cheongyak_comments: 이 결과 폴더(run_folder)의 행 수', VC.db_run_rows != null ? fmt(VC.db_run_rows) : '-', VC.db_run_rows === VC.period_rows ? '일치' : '확인 필요'],
+      ...(VC.db_unique_ids != null ? [
+        ['DB 중복 확인', 'cheongyak_comments: 전체 행 / 고유 comment_id / 두 번 이상 저장된 comment_id', `${fmt(VC.db_total_rows)} / ${fmt(VC.db_unique_ids)} / ${fmt(VC.db_duplicate_ids)}`, (VC.db_total_rows === VC.db_unique_ids && VC.db_duplicate_ids === 0) ? '중복 없음' : '확인 필요'],
+      ] : []),
+    ]),
+    caption('표 3. 단계별 댓글 건수 대조 (수집 기록 · CSV · 데이터베이스)'),
+    note(`DB 건수 출처: ${VC.db_source === 'live query (verify_counts.py)' ? 'verify_counts.py 로 Supabase 직접 조회' : 'upload_supabase.py 실행 직후 run_folder 기준 count(*) 조회 결과'} (${kstTime(VC.checked_at)} 확인).`),
+    p(`수집 단계에서 받은 ${fmt(VC.log_received_items)}개는 중복 없이 모두 comments.csv에 저장되었고(고유 comment_id ${fmt(VC.comments_csv_unique_ids)}개), LLM 분류에서도 실패한 댓글 없이 ${fmt(VC.classified_csv_rows)}개 모두 결과를 받았다. 이 중 분석 기간에 작성된 ${fmt(VC.period_rows)}개가 데이터베이스에 같은 수(${VC.db_run_rows != null ? fmt(VC.db_run_rows) : '-'}행)로 저장되어, 수집부터 저장까지 모든 단계의 건수가 일치하였다.`, { indent: true }),
+  ] : []),
+  p([b('중복 저장 방지. '), new TextRun('같은 댓글이 두 번 저장되지 않도록 세 단계에서 막았다.')]),
+  bullet([b('수집 단계: '), new TextRun(`페이지를 넘기는 사이 새 댓글이 달려 같은 댓글이 다음 페이지에 다시 나올 수 있으므로, 이미 받은 comment_id를 집합(set)에 기록해 두고 같은 번호는 건너뛰었다(이번 수집 ${CL.duplicates_skipped ?? '-'}개 제외).`)]),
+  bullet([b('데이터베이스 구조: '), new TextRun('cheongyak_comments 테이블은 comment_id를, cheongyak_runs 테이블은 결과 폴더 이름(run_folder)을 기본 키(PRIMARY KEY)로 지정하였다. 기본 키는 값이 겹치는 행을 데이터베이스가 받아들이지 않으므로, 코드에 실수가 있더라도 같은 댓글이 두 행으로 저장될 수 없다.')]),
+  bullet([b('다시 올릴 때: '), new TextRun('업로드는 INSERT … ON CONFLICT (comment_id) DO UPDATE(upsert) 구문을 사용하였다. 이미 있는 댓글이면 새 행을 추가하지 않고 분류 결과·좋아요 수 등만 최신 값으로 갱신한다. 분류를 다시 하거나 업로드를 여러 번 실행해도 행 수는 늘어나지 않으며, 같은 데이터를 두 번 올리는 시험에서도 행 수가 1,045개로 그대로였다.')]),
+  ...(VC && VC.db_unique_ids == null ? [todo('Mac 에서 python verify_counts.py 를 실행하면 Supabase 에서 전체 행·고유 comment_id·중복 수·기본 키를 직접 조회해 verify_counts.json 에 저장한다. 그 뒤 보고서를 다시 만들면 표 3에 “DB 중복 확인” 행이 추가된다.')] : []),
 
   h3('2. LLM 분석'),
   p([b('분석 목적. '), new TextRun('유튜브 댓글은 비정형 텍스트 데이터이기 때문에 하나의 댓글에서도 정책에 대한 태도와 관심 주제가 복합적으로 나타날 수 있다. 본 연구에서는 이러한 자연어 데이터를 효율적으로 분석하기 위해 LLM을 활용하였다. 댓글을 단순히 긍정 또는 부정으로 나누는 데 그치지 않고, 정책에 대한 태도, 주요 관심사, 집값 전망, 청약통장 관련 행동 의향을 구분하여 분석하였다.')]),
-  p([b('분류 기준. '), new TextRun('댓글의 태도는 긍정, 부정, 양가로 구분하고, 청약에 대한 판단이 드러나지 않는 댓글은 “해당 없음”으로 따로 분류하였다. 관심사는 한 댓글에 해당하는 것을 모두 고르도록 하였고, 이와 함께 집값 상승·하락 전망과 청약통장 해지·유지 의향을 별도로 분류하였다(표 3).')]),
+  p([b('분류 기준. '), new TextRun('댓글의 태도는 긍정, 부정, 양가로 구분하고, 청약에 대한 판단이 드러나지 않는 댓글은 “해당 없음”으로 따로 분류하였다. 관심사는 한 댓글에 해당하는 것을 모두 고르도록 하였고, 이와 함께 집값 상승·하락 전망과 청약통장 해지·유지 의향을 별도로 분류하였다(표 4).')]),
   table([1500, 2300, 5226], [
     ['차원', '범주', '판단 기준'],
     ['태도\n(하나 선택)', '부정', '청약 정책이나 제도의 문제점, 부정적인 영향을 지적하는 댓글'],
@@ -206,7 +234,7 @@ children.push(
     ['집값 전망', '상승 / 하락 / 없음', '앞으로의 가격 방향을 말하거나 가격이 계속 오르고 있다고 서술한 경우. “비싸다”처럼 현재 수준만 말하면 “없음”'],
     ['통장 행동', '해지 / 유지 / 없음', '작성자가 해지했거나 할 계획인지, 유지하고 있거나 유지를 권하는지'],
   ]),
-  caption('표 3. 댓글 분류 기준'),
+  caption('표 4. 댓글 분류 기준'),
   p([b('프롬프트 설계. '), new TextRun('LLM에 입력하는 프롬프트에서는 댓글의 의미를 임의로 확대해석하지 않도록 분류 기준과 범주별 예시를 구체적으로 제시하였다. 수업 예제(ev-run.py)처럼 분류 기준을 별도 파일(cy-index.txt, 부록 1)로 분리하고, 역할 부여 → 분류 기준 → 필수 규칙 → JSON 출력 형식 순서로 구성하였다. 단순한 감탄이나 욕설처럼 청약에 대한 방향성을 확인하기 어려운 댓글은 “해당 없음”으로 처리하도록 하였다. 집값 전망은 댓글에 상승 또는 하락이 드러난 경우에만 해당 범주로 분류하여 분석자의 추측이 개입되는 것을 줄였다.')]),
   p([b('댓글 분류 방법. '), new TextRun(`댓글 ${fmt(S.n_comments)}개를 ${S.batch_size}개씩 묶어 번호를 붙여 LLM(${S.model_label})에 입력하고, 사전에 정한 기준에 따라 결과를 JSON으로 받았다. 응답은 번호로 원래 댓글과 맞췄으며, 형식이 틀리거나 빠진 댓글은 그 댓글만 다시 요청하였다. 이후 결과를 집계하여 각 태도와 관심사가 전체 댓글에서 차지하는 비중을 계산하였다. 또한 댓글 수와 함께 해당 댓글이 받은 좋아요 수를 분석하여, 댓글의 빈도와 다른 이용자들의 공감 정도가 일치하는지 비교하였다.`)]),
   p([b('신뢰도 검증(Human-in-the-loop). '), new TextRun('LLM 분류가 사람의 판단과 얼마나 일치하는지 확인하기 위해, 분석 기간 댓글 중 무작위로 뽑은 100개를 팀원이 LLM 결과를 보지 않은 채 같은 기준(cy-index.txt)으로 직접 분류하였다. 또한 다른 LLM인 Claude(Anthropic)에게도 gpt-oss-120b의 결과를 보여 주지 않고 같은 100개를 같은 기준으로 분류하게 하여, 사람·gpt-oss-120b·Claude 세 분류를 서로 비교하였다. 일치도는 Cohen’s κ로 계산하고, LLM과 판단이 달랐던 댓글은 조원이 함께 검토하여 오분류 유형을 정리하였다(check_reliability.py).')]),
@@ -215,23 +243,23 @@ children.push(
       ['비교', '댓글 수', '태도 κ', '관심사 κ(평균)', '집값 전망 κ', '통장 행동 κ'],
       ...KAPPA.map(r => [r.pair.replace('claude', 'Claude').replace('팀원1', '사람(팀원)'), r.n, r['태도 κ'], r['관심사 κ(평균)'], r['집값 전망 κ'], r['통장 행동 κ']]),
     ]),
-    caption('표 4. 분류 일치도 (Cohen’s κ, 0.61 이상 상당한 일치 / 0.81 이상 거의 완전한 일치)'),
+    caption('표 5. 분류 일치도 (Cohen’s κ, 0.61 이상 상당한 일치 / 0.81 이상 거의 완전한 일치)'),
   ] : []),
   ...(KAPPA.length ? [
-    p(`검증 결과, 사람(팀원)과 두 LLM의 일치도는 모든 항목에서 “보통” 이상이었다(표 4). 사람과 Claude는 태도 κ=0.67, 통장 행동 κ=0.85로 가장 잘 맞았고, 본 분석에 쓴 gpt-oss-120b는 사람과 태도 κ=0.59, 관심사 κ=0.71, 통장 행동 κ=0.73이었다. 세 분류가 태도를 모두 똑같이 판단한 댓글은 100개 중 68개였으며, 셋 중 하나만 다르게 판단한 경우는 gpt-oss-120b가 15개로 가장 많았다(Claude 9개, 사람 7개).`, { indent: true }),
+    p(`검증 결과, 사람(팀원)과 두 LLM의 일치도는 모든 항목에서 “보통” 이상이었다(표 5). 사람과 Claude는 태도 κ=0.67, 통장 행동 κ=0.85로 가장 잘 맞았고, 본 분석에 쓴 gpt-oss-120b는 사람과 태도 κ=0.59, 관심사 κ=0.71, 통장 행동 κ=0.73이었다. 세 분류가 태도를 모두 똑같이 판단한 댓글은 100개 중 68개였으며, 셋 중 하나만 다르게 판단한 경우는 gpt-oss-120b가 15개로 가장 많았다(Claude 9개, 사람 7개).`, { indent: true }),
     table([2600, 1600, 1600, 1600, 1626], [
       ['태도 (100개 중)', '부정', '양가', '긍정', '해당 없음'],
       ['사람(팀원)', '70', '9', '4', '17'],
       ['Claude', '62', '9', '6', '23'],
       ['gpt-oss-120b', '54', '17', '3', '26'],
     ]),
-    caption('표 5. 같은 댓글 100개에 대한 분류자별 태도 분포'),
+    caption('표 6. 같은 댓글 100개에 대한 분류자별 태도 분포'),
     p('불일치는 한 방향으로 몰려 있었다. 사람이 부정으로 본 70개 중 gpt-oss-120b는 11개를 “해당 없음”, 6개를 “양가”로 분류하였다. “누가 요새 청약을 함??ㅋㅋ”, “청약통장 아직 갖고 있는 흑우 있음?”처럼 비꼬는 말투로 청약을 깎아내리는 짧은 댓글을 gpt-oss-120b는 판단이 없는 댓글로 처리하는 경향이 있었다. 반대로 사람이 부정이 아니라고 본 댓글을 gpt-oss-120b가 부정으로 분류한 경우는 1개뿐이었다. 따라서 본 연구의 부정 비율(청약 관련 댓글의 70.1%)은 실제보다 낮게 추정되었을 가능성이 크며, 결론의 방향(부정적 인식이 우세)은 오히려 더 강해진다. 통장 행동에서도 gpt-oss-120b는 “(계속 납입 중)”, “나만 깬 게 아니구나”처럼 간접적으로 드러난 유지·해지를 놓치는 경우가 대부분이었다(불일치 8건 중 7건). 따라서 해지·유지 의향 댓글 수도 실제보다 적게 잡혔을 가능성이 있다.', { indent: true }),
   ] : []),
-  todo('검증 시트를 추가로 받으면 check_reliability.py score 를 다시 실행해 표 4를 갱신하고, 표 5와 위 해석 문단의 숫자도 함께 확인할 것 (현재: 팀원 1명, Claude, gpt-oss-120b).'),
+  todo('검증 시트를 추가로 받으면 check_reliability.py score 를 다시 실행해 표 5를 갱신하고, 표 6과 위 해석 문단의 숫자도 함께 확인할 것 (현재: 팀원 1명, Claude, gpt-oss-120b).'),
 
   h3('3. 주택가격 데이터'),
-  p([b('데이터 출처. '), new TextRun('댓글 속 인식과 비교할 주택시장 지표는 공공데이터포털에서 제공하는 한국부동산원·국토교통부 자료를 기본으로 하고(표 6), 최신 수치는 한국부동산원·주택도시보증공사(HUG) 통계를 인용한 언론 보도로 보완하였다(표 11).')]),
+  p([b('데이터 출처. '), new TextRun('댓글 속 인식과 비교할 주택시장 지표는 공공데이터포털에서 제공하는 한국부동산원·국토교통부 자료를 기본으로 하고(표 7), 최신 수치는 한국부동산원·주택도시보증공사(HUG) 통계를 인용한 언론 보도로 보완하였다(표 12).')]),
   table([2300, 3600, 3126], [
     ['비교할 인식', '데이터 (공공데이터포털)', '가격지표'],
     ['“다들 해지한다”', '한국부동산원 청약통장 전체 가입현황 (15088657), 청약통장 통계 조회 API (15114369)', '월별 가입자 수, 1·2순위 구성, 시도별 증감'],
@@ -240,7 +268,7 @@ children.push(
     ['“10억~20억은 있어야”', '국토교통부 아파트 매매 실거래가 상세 (15126468)', '거래금액 중위값·분위수'],
     ['“분양가가 너무 비싸다”', 'HUG 민간아파트 분양가격 동향', '3.3㎡당 평균 분양가, 전년 대비 상승률'],
   ]),
-  caption('표 6. 주택가격 데이터 구성'),
+  caption('표 7. 주택가격 데이터 구성'),
   p([b('지역. '), new TextRun('서울, 수도권(경기·인천), 지방의 세 권역으로 나누었다. 댓글에서 “서울은 로또, 지방은 청약이 필요 없다”처럼 지역을 나누는 인식이 반복되기 때문이다.')]),
   p([b('기간. '), new TextRun('청약통장 가입자가 정점을 찍은 2021년 1월부터 2026년 8월까지를 기본으로 하고, 대출 규제가 강화된 2025년 10·15 대책 전후를 구분하여 살펴본다.')]),
   p([b('가격지표. '), new TextRun('분양가(3.3㎡당), 아파트 매매가격지수 변동률, 중위 매매가격, 실거래 금액, 주택담보대출 한도를 사용한다.')]),
@@ -254,7 +282,7 @@ const ratio = (p) => (TR.period[p].action.H / Math.max(TR.period[p].action.K, 1)
 children.push(
   h2('ⅱ) 분석 결과'),
   h3('1. 정책 관련 댓글의 전반적인 반응'),
-  p(`분석 대상 댓글 ${fmt(S.n_comments)}개 가운데 ${fmt(S.n_irrelevant)}개(${pct(S.n_irrelevant, S.n_comments)}%)는 청약에 대한 판단이 없는 “해당 없음” 댓글이었다. 대부분 특정 정당이나 대통령에 대한 구호, 세대 비난, 짧은 감탄이었다. 나머지 ${fmt(S.n_relevant)}개의 태도는 표 7과 같다.`, { indent: true }),
+  p(`분석 대상 댓글 ${fmt(S.n_comments)}개 가운데 ${fmt(S.n_irrelevant)}개(${pct(S.n_irrelevant, S.n_comments)}%)는 청약에 대한 판단이 없는 “해당 없음” 댓글이었다. 대부분 특정 정당이나 대통령에 대한 구호, 세대 비난, 짧은 감탄이었다. 나머지 ${fmt(S.n_relevant)}개의 태도는 표 8과 같다.`, { indent: true }),
   table([2000, 1700, 1700, 1800, 1826], [
     ['태도', '댓글 수', '비율', '받은 좋아요', '좋아요 비중'],
     ['부정', fmt(S.stance_count.N), `${f1(S.stance_share.N)}%`, fmt(stanceLikes('N')), `${f1(S.stance_like_share.N)}%`],
@@ -262,7 +290,7 @@ children.push(
     ['긍정', fmt(S.stance_count.P), `${f1(S.stance_share.P)}%`, fmt(stanceLikes('P')), `${f1(S.stance_like_share.P)}%`],
     ['합계 (청약 관련)', fmt(S.n_relevant), '100.0%', fmt(likesRel), '100.0%'],
   ]),
-  caption(`표 7. 청약 관련 댓글의 태도 분포 (LLM 분류, ${period})`),
+  caption(`표 8. 청약 관련 댓글의 태도 분포 (LLM 분류, ${period})`),
   img(path.join(RESULTS, 'fig1_stance.png'), 600, 195),
   caption('그림 2. 태도 분포: 댓글 수 기준과 좋아요 가중 비교'),
   p(`부정적인 댓글이 ${f1(S.stance_share.N)}%로 가장 많았고, 좋아요로 가중하면 ${f1(S.stance_like_share.N)}%까지 올라간다. 다만 이 기간의 좋아요는 소수 댓글에 크게 몰려 있다. 댓글의 ${zeroLikeShare}%는 좋아요가 하나도 없고, 가장 많은 좋아요를 받은 댓글 하나(${fmt(topC.like_count)}개)가 전체 좋아요의 ${f1(S.top1_like_share)}%를, 상위 10개 댓글이 ${f1(S.top10_like_share)}%를 차지한다. 그 댓글 하나를 빼고 계산해도 부정 비중은 ${f1(S.stance_like_share_wo_top1.N)}%로 여전히 높지만, 좋아요 가중 수치는 몇 개 댓글에 따라 크게 달라질 수 있으므로 본 연구에서는 댓글 수 기준을 중심으로 해석하였다.`, { indent: true }),
@@ -272,7 +300,7 @@ children.push(
     ['관심사', '댓글 수', '전체 댓글 대비', '좋아요 비중'],
     ...topicOrder.map(k => [T[k], fmt(S.topic_count[k]), `${f1(S.topic_share[k])}%`, `${f1(S.topic_like_share[k])}%`]),
   ]),
-  caption(`표 8. 관심사별 언급 빈도와 좋아요 비중 (한 댓글에 여러 관심사가 나올 수 있어 합계는 100%를 넘음, n=${fmt(S.n_comments)})`),
+  caption(`표 9. 관심사별 언급 빈도와 좋아요 비중 (한 댓글에 여러 관심사가 나올 수 있어 합계는 100%를 넘음, n=${fmt(S.n_comments)})`),
   img(path.join(RESULTS, 'fig2_topics.png'), 600, 280),
   caption('그림 3. 관심사별 언급 비율과 좋아요 비중'),
   p(`가장 많이 언급된 관심사는 ${T[topicOrder[0]]}(${f1(S.topic_share[topicOrder[0]])}%)였다. 이어 ${T[topicOrder[1]]}(${f1(S.topic_share[topicOrder[1]])}%), ${T[topicOrder[2]]}(${f1(S.topic_share[topicOrder[2]])}%), ${T[topicOrder[3]]}(${f1(S.topic_share[topicOrder[3]])}%), ${T[topicOrder[4]]}(${f1(S.topic_share[topicOrder[4]])}%) 순이었다. 댓글들은 대체로 “분양가가 너무 높아 당첨돼도 살 수 없고, 대출은 막혀 있으며, 당첨 조건은 1인가구나 평범한 직장인에게 불리하다”는 하나의 논리로 이 요소들을 묶었다. 댓글에서 언급된 금액(“○억”) ${S.amount_mentions}건의 중앙값은 ${S.amount_median_eok}억 원이었다.`, { indent: true }),
@@ -289,12 +317,12 @@ children.push(
     ['청약통장 해지', fmt(S.action.H), `주된 이유: 대체 투자·낮은 금리(${RC('대체 투자·낮은 금리')}건), 분양가·집값 부담(${RC('분양가·집값 부담')}건), 대출규제(${RC('대출규제·자금조달')}건)`],
     ['청약통장 유지', fmt(S.action.K), `주된 이유: 임대·대출우대 등 부가 기능(${RK('임대·대출우대 등 부가 기능')}건), 소득공제·적금 기능(${RK('대체 투자·낮은 금리')}건)`],
   ]),
-  caption('표 9. 집값 전망과 청약통장 행동 의향 (한 댓글이 여러 이유를 말할 수 있음)'),
+  caption('표 10. 집값 전망과 청약통장 행동 의향 (한 댓글이 여러 이유를 말할 수 있음)'),
   p(`집값 방향을 말한 댓글은 ${S.outlook.U + S.outlook.D}개(${f1(S.outlook_share)}%)뿐이었다. 대부분의 댓글은 가격이 오를지 내릴지가 아니라 “이미 감당할 수 없다”는 현재 수준을 말했다. 전망을 밝힌 댓글 중에는 하락(${S.outlook.D}개)이 상승(${S.outlook.U}개)보다 많았지만, 하락 댓글의 상당수는 구체적인 예측이라기보다 가격이 내려가기를 바라는 마음이나 인구 감소에 따른 장기적 전망이었다.`, { indent: true }),
   p(`청약통장에 대해서는 해지 의향(${S.action.H}개)이 유지 의향(${S.action.K}개)보다 많았다. 해지한 사람들은 주식·ETF 같은 다른 투자처와 분양가 부담을 주로 들었다. 유지하는 사람들도 내 집 마련 수단이라기보다 LH·SH 임대주택 가점, 디딤돌 대출 금리우대, 소득공제 같은 부가 혜택 때문에 통장을 두고 있다고 답했다.`, { indent: true }),
 
   h3('4. 일주일 동안의 반응 변화'),
-  p(`분석 기간 7일 동안 댓글 수는 첫날(9월 13일) ${TR.daily['2026-09-13'].n}개로 가장 많았고, 9월 14~15일 ${TR.period['9/14~15'].n}개를 거쳐 9월 16일 이후에는 하루 12~61개로 줄었다(그림 4). 날짜별 댓글 수 차이가 커서 하루 단위 비율은 뒤로 갈수록 흔들리므로, 규모가 비슷하도록 첫날, 둘째·셋째 날, 나머지 나흘의 세 구간으로 묶어 비교하였다(표 10).`, { indent: true }),
+  p(`분석 기간 7일 동안 댓글 수는 첫날(9월 13일) ${TR.daily['2026-09-13'].n}개로 가장 많았고, 9월 14~15일 ${TR.period['9/14~15'].n}개를 거쳐 9월 16일 이후에는 하루 12~61개로 줄었다(그림 4). 날짜별 댓글 수 차이가 커서 하루 단위 비율은 뒤로 갈수록 흔들리므로, 규모가 비슷하도록 첫날, 둘째·셋째 날, 나머지 나흘의 세 구간으로 묶어 비교하였다(표 11).`, { indent: true }),
   img(path.join(RESULTS, 'fig4_daily_trend.png'), 600, 390),
   caption('그림 4. 날짜별 댓글 수와 태도 비중 (청약 관련 댓글 기준)'),
   table([2600, 2142, 2142, 2142], [
@@ -309,7 +337,7 @@ children.push(
     ['대체 투자 언급 (전체 대비)', ...PER.map(p => `${f1(TR.period[p].topic_share.E)}%`)],
     ['부가 기능 언급 (전체 대비)', ...PER.map(p => `${f1(TR.period[p].topic_share.G)}%`)],
   ]),
-  caption(`표 10. 구간별 태도와 주요 지표 변화 (태도 비중은 청약 관련 댓글 기준)${TR.period_test ? ` — 태도×구간 카이제곱 검정 χ²=${TR.period_test.chi2}, p=${TR.period_test.p}` : ''}`),
+  caption(`표 11. 구간별 태도와 주요 지표 변화 (태도 비중은 청약 관련 댓글 기준)${TR.period_test ? ` — 태도×구간 카이제곱 검정 χ²=${TR.period_test.chi2}, p=${TR.period_test.p}` : ''}`),
   p(`부정적 반응은 세 구간 모두 ${f1(Math.min(...PER.map(p => TR.period[p].stance_share.N)))}~${f1(Math.max(...PER.map(p => TR.period[p].stance_share.N)))}%로 거의 변하지 않았다. 변화는 나머지 두 반응 사이에서 나타났다. 긍정적 반응은 ${f1(TR.period['9/13'].stance_share.P)}% → ${f1(TR.period['9/14~15'].stance_share.P)}% → ${f1(TR.period['9/16~19'].stance_share.P)}%로 줄었고, 양가적 반응은 ${f1(TR.period['9/13'].stance_share.M)}% → ${f1(TR.period['9/14~15'].stance_share.M)}% → ${f1(TR.period['9/16~19'].stance_share.M)}%로 늘었다.${TR.period_test ? ` 구간과 태도의 관계는 통계적으로도 유의하였다(χ²=${TR.period_test.chi2}, 자유도 ${TR.period_test.dof}, p=${TR.period_test.p}). 다만 7일을 하루 단위로 나누면 뒤쪽 날짜의 댓글이 적어 유의하지 않았다(p=${TR.daily_test.p}).` : ''}`, { indent: true }),
   p(`즉 시간이 지나면서 청약을 부정하는 목소리는 그대로인 채, “그래도 깨지 마라”는 유지 권유가 줄고 “소득공제 때문에 둔다”, “최소 금액만 넣는다”처럼 효용을 따져 보는 양가적 댓글이 늘었다. 청약통장 해지 의향은 유지 의향의 ${ratio('9/13')}배(${TR.period['9/13'].action.H}대 ${TR.period['9/13'].action.K})에서 마지막 나흘 ${ratio('9/16~19')}배(${TR.period['9/16~19'].action.H}대 ${TR.period['9/16~19'].action.K})로 벌어졌다. 유지의 근거로 쓰이던 임대 가점·금리우대 같은 부가 기능 언급도 ${f1(TR.period['9/13'].topic_share.G)}%에서 ${f1(TR.period['9/16~19'].topic_share.G)}%로 줄었다.`, { indent: true }),
   p(`정치인·정당을 직접 언급한 댓글은 첫날 ${TR.period['9/13'].political}개(${pct(TR.period['9/13'].political, TR.period['9/13'].n)}%)로 몰렸다가 마지막 나흘에는 ${TR.period['9/16~19'].political}개(${pct(TR.period['9/16~19'].political, TR.period['9/16~19'].n)}%)로 줄었다. 반면 정부·정치 불신 전체 비중(${f1(TR.period['9/13'].topic_share.F)}% → ${f1(TR.period['9/16~19'].topic_share.F)}%)과 대체 투자 언급(${f1(TR.period['9/13'].topic_share.E)}% → ${f1(TR.period['9/16~19'].topic_share.E)}%)은 조금씩 늘었다. 특정 정치인을 겨냥한 구호는 초반에 집중되고, 뒤로 갈수록 제도 전반에 대한 불신과 “청약 대신 투자” 같은 개인적 대안이 남는 양상이다. 분양가·대출·가점·제도 불공정 같은 핵심 관심사의 비중은 기간 내내 큰 변화가 없었다.`, { indent: true }),
@@ -324,7 +352,7 @@ children.push(
     ['지방 아파트 매매가격', '9월 1주: 4대 광역시 +0.01%, 세종 −0.02%', '한국부동산원'],
     ['청약통장 가입자', '2021년 약 2,677만 명 → 2026년 6월 2,471만 명\n2026년 1~7월 순감 32만 9천 좌', '국토교통부 자료(뉴스핌 보도)'],
   ]),
-  caption('표 11. 주요 주택시장 지표 (보도 자료 기준)'),
+  caption('표 12. 주요 주택시장 지표 (보도 자료 기준)'),
   p('2025년 10·15 대책으로 서울 전역과 경기 12곳이 규제지역으로 지정되고 주택담보대출 한도가 줄었지만, 서울 아파트 매매가격은 2026년 들어서도 8월까지 7.52% 올랐다. 분양가는 매매가격보다 더 빠르게 올라 서울 민간아파트 분양가가 1년 새 34.2% 상승했다. 반면 지방은 4대 광역시가 보합, 세종이 소폭 하락하는 등 서울과의 격차가 커지고 있다. 대출 한도가 묶인 상태에서 가격이 오르면서, 전용 84㎡ 기준으로는 대출 4억 원을 받아도 약 18억 원의 현금이 필요한 상황이다.', { indent: true }),
   todo('공공데이터포털 원자료(housing_data.py)로 2021~2026년 월별 시계열 그래프를 추가하고, 10·15 대책 전후 12개월을 비교할 것: ① 청약통장 가입자 수 ② 권역별 중위매매가격 ③ 서울·경기·지방 실거래가 중위값.'),
 
@@ -338,7 +366,7 @@ children.push(
     [`“지방은 청약이 필요 없다” (${f1(S.topic_share.H)}%)`, '지방 매매가 보합·하락, 서울만 상승', '일치', '미분양 통계로 보강 필요'],
     [`집값 전망 (${f1(S.outlook_share)}%, 하락 ${S.outlook.D} > 상승 ${S.outlook.U})`, '서울 누적 +7.52%로 상승 지속', '불일치', '하락 댓글 다수가 예측보다 바람·가정'],
   ]),
-  caption('표 12. 댓글 속 인식과 주택시장 지표 비교'),
+  caption('표 13. 댓글 속 인식과 주택시장 지표 비교'),
   p('정리하면, 댓글이 청약을 부정적으로 보는 근거인 고분양가, 대출 한도, 가점 구조, 지역 간 격차는 실제 시장 지표와 대체로 일치하였다. 이용자들이 막연한 불만이 아니라 현재의 가격과 제도 아래에서 청약이 자신에게 어떤 의미인지를 비교적 정확하게 판단하고 있다는 뜻이다. 반면 집값의 방향에 대해서는 댓글 여론(하락 우세)과 실제 시장(서울 상승 지속)이 어긋났다. “대출이 전혀 안 된다”, “모두 해지한다”처럼 규모를 부풀리는 표현도 있었다.', { indent: true }),
 );
 
@@ -398,6 +426,14 @@ children.push(
 );
 
 const doc = new Document({
+  footnotes: {
+    1: { children: [new Paragraph({ children: [new TextRun({ text: '코드 저장소(GitHub): ', size: 17 }),
+      new ExternalHyperlink({ link: GITHUB_URL, children: [new TextRun({ text: GITHUB_URL, style: 'Hyperlink', color: '2A78D6', underline: {}, size: 17 })] }),
+      new TextRun({ text: ' — 수집(collect_comments.py), 분류(classify_comments.py), 집계(analyze_comments.py), 신뢰도 검증(check_reliability.py), DB 저장(upload_supabase.py), 건수 대조(verify_counts.py), 보고서 생성(report/build_report.js) 코드와 결과 폴더 전체.', size: 17 })] })] },
+    2: { children: [new Paragraph({ children: [new TextRun({ text: 'Supabase 프로젝트(데이터베이스): ', size: 17 }),
+      new ExternalHyperlink({ link: SUPABASE_URL, children: [new TextRun({ text: SUPABASE_URL, style: 'Hyperlink', color: '2A78D6', underline: {}, size: 17 })] }),
+      new TextRun({ text: ' — 테이블 cheongyak_comments, cheongyak_runs (프로젝트 멤버로 초대받은 계정만 열람 가능).', size: 17 })] })] },
+  },
   styles: {
     default: { document: { run: { font: FONT, size: 21 } } },
     paragraphStyles: [

@@ -1,0 +1,18 @@
+{
+  "run_folder": "g4h29mJufpc_20260919T063349180506Z",
+  "checked_at": "2026-09-20T03:45:44.541644+00:00",
+  "log_received_items": 2156,
+  "log_duplicates_skipped": 0,
+  "log_saved_rows": 2156,
+  "log_pages": 22,
+  "log_stop_reason": "no_next_page",
+  "comments_csv_rows": 2156,
+  "comments_csv_unique_ids": 2156,
+  "classify_log_n_comments": 2156,
+  "classify_log_n_failed": 0,
+  "classified_csv_rows": 2156,
+  "period_rows": 1045,
+  "period_classified": 1045,
+  "db_run_rows": 1045,
+  "db_source": "upload_supabase.py 실행 출력 (업로드 직후 run_folder 기준 count(*) 조회)"
+}
