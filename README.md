@@ -63,7 +63,12 @@ python verify_counts.py               # 수집 기록 · CSV · Supabase 건수 
 python verify_counts.py --no-db       # 파일끼리만 대조
 ```
 
-Supabase 프로젝트: <https://supabase.com/dashboard/project/evfplzqpewwjtttlmvxc> (프로젝트 멤버만 열람 가능)
+**[Supabase DB 대시보드](https://ghlee1016.github.io/Chungyak_analyze/)** — 페이지를 열 때 DB를 직접 조회해 건수·중복·태도·관심사·날짜별 추이와 댓글 원문을 보여 줍니다(`docs/index.html`, GitHub Pages).
+
+원본 JSON (읽기 전용, 로그인 불필요):
+[댓글 분류 결과 100행](https://evfplzqpewwjtttlmvxc.supabase.co/rest/v1/cheongyak_comments?select=comment_id,published_at,stance,topics,outlook,action,text_raw&order=published_at&limit=100&apikey=sb_publishable_Z3P3DWzEzLeL7BAhArEotQ_hptLYysY) ·
+[실행 정보](https://evfplzqpewwjtttlmvxc.supabase.co/rest/v1/cheongyak_runs?select=run_folder,period_start,period_end,n_comments,model&apikey=sb_publishable_Z3P3DWzEzLeL7BAhArEotQ_hptLYysY)
+— `apikey`는 공개용 publishable 키이며, 두 테이블은 RLS로 읽기(SELECT)만 허용합니다.
 
 `.env`의 `SUPABASE_CONNECTION_STRING`으로 접속합니다(원본 `llm-ev.py`와 같은 방식). 테이블은 없으면 자동으로 만들고, 같은 댓글은 덮어써서 여러 번 실행해도 중복되지 않습니다.
 

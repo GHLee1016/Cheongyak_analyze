@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>청약 댓글 DB 대시보드</title>
+<!--
+  CNT3054 청약 인식 프로젝트(B안): Supabase 저장 결과 대시보드 (GitHub Pages)
+  페이지를 열 때마다 Supabase REST API 에서 cheongyak_comments / cheongyak_runs 를 직접 읽어 집계한다.
+  - 키: publishable(공개용) 키. 두 테이블은 RLS 로 읽기(SELECT)만 허용
+  - REST API 문서: https://supabase.com/docs/guides/api
+  - 코드 저장소: https://github.com/GHLee1016/Chungyak_analyze
+-->
+<style>
+:root{
+  --bg:#f6f5f2; --card:#ffffff; --ink:#1d1d1b; --muted:#65635e; --line:#e3e1dc;
+  --N:#d9534f; --M:#e6a23c; --P:#3a8d5c; --X:#9a9892; --accent:#2a6fb0; --ok:#2f855a;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#171716; --card:#222220; --ink:#ecebe7; --muted:#a3a19b; --line:#34332f;
+  --N:#e8716d; --M:#efb95e; --P:#5fb983; --X:#7d7b75; --accent:#6aa9e6; --ok:#6cc594;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:22px;margin:0 0 4px}
+h2{font-size:16px;margin:0 0 12px}
+.sub{color:var(--muted);font-size:13px}
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin:18px 0}
+.two{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.kpi .v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi .l{color:var(--muted);font-size:12.5px}
+.ok{color:var(--ok);font-weight:600}
+.bar{display:grid;grid-template-columns:150px 1fr 104px;align-items:center;gap:8px;margin:6px 0;font-size:13px}
+.bar .t{height:16px;background:var(--line);border-radius:4px;overflow:hidden}
+.bar .f{height:100%;border-radius:4px;background:var(--accent)}
+.bar .n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--muted)}
+.stack{display:flex;height:22px;border-radius:5px;overflow:hidden;background:var(--line)}
+.stack span{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.day{display:grid;grid-template-columns:64px 1fr 44px;gap:8px;align-items:center;margin:5px 0;font-size:13px}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+select,input{font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+input{flex:1;min-width:160px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+th{color:var(--muted);font-weight:600;white-space:nowrap}
+td.txt{white-space:pre-wrap;word-break:break-all;min-width:220px}
+.chip{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11.5px;color:#fff;white-space:nowrap}
+.tchip{display:inline-block;padding:0 5px;margin:1px;border:1px solid var(--line);border-radius:6px;font-size:11px;color:var(--muted);white-space:nowrap}
+.tablewrap{overflow-x:auto}
+.pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:10px;font-size:13px}
+button{font:inherit;font-size:13px;padding:5px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);cursor:pointer}
+button:disabled{opacity:.4;cursor:default}
+a{color:var(--accent)}
+.err{background:#fdecea;color:#8a1f1a;border-color:#f3c0bc}
+.foot{margin-top:18px;font-size:12.5px;color:var(--muted)}
+.foot code{word-break:break-all}
+@media (max-width:520px){ .bar{grid-template-columns:104px 1fr 96px} .kpi .v{font-size:22px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>청약 댓글 분류 결과 · Supabase DB 대시보드</h1>
+  <div class="sub" id="meta">Supabase에서 불러오는 중…</div>
+
+  <div class="grid kpis" id="kpis"></div>
+
+  <div class="grid two">
+    <div class="card">
+      <h2>태도 분포 <span class="sub">(청약 관련 댓글 기준 비율)</span></h2>
+      <div class="stack" id="stanceStack"></div>
+      <div class="legend" id="stanceLegend"></div>
+      <div id="stanceBars" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <h2>관심사 <span class="sub">(전체 댓글 대비, 복수 선택)</span></h2>
+      <div id="topicBars"></div>
+    </div>
+    <div class="card">
+      <h2>날짜별 댓글 수와 태도 <span class="sub">(한국 시간)</span></h2>
+      <div id="days"></div>
+    </div>
+    <div class="card">
+      <h2>집값 전망 · 청약통장 행동</h2>
+      <div id="oa"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h2>댓글 원문과 분류 결과</h2>
+    <div class="controls">
+      <select id="fStance"><option value="">태도: 전체</option></select>
+      <select id="fTopic"><option value="">관심사: 전체</option></select>
+      <select id="fAction"><option value="">통장 행동: 전체</option><option value="H">해지</option><option value="K">유지</option></select>
+      <select id="fSort"><option value="time">작성 시각순</option><option value="likes">좋아요순</option></select>
+      <input id="fText" placeholder="댓글 검색">
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>작성(KST)</th><th>태도</th><th>관심사</th><th>전망</th><th>행동</th><th>좋아요</th><th>댓글</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+    <div class="pager"><span id="pinfo"></span><button id="prev">이전</button><button id="next">다음</button></div>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const PROJECT = 'https://evfplzqpewwjtttlmvxc.supabase.co';
+const KEY = 'sb_publishable_Z3P3DWzEzLeL7BAhArEotQ_hptLYysY';   // 공개용 키 (RLS 로 읽기만 허용)
+const REPO = 'https://github.com/GHLee1016/Chungyak_analyze';
+const STANCE = {N:'부정', M:'양가', P:'긍정', X:'해당 없음'};
+const TOPIC = {A:'분양가·집값 부담', B:'대출규제·자금조달', C:'가점·당첨확률', D:'제도 불공정', E:'대체 투자·낮은 금리',
+               F:'정부·정치 불신', G:'임대·대출우대 등 부가 기능', H:'수도권 집중·지방·인구', I:'신축 품질·하자'};
+const OUT = {U:'상승', D:'하락'}, ACT = {H:'해지', K:'유지'};
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const $ = id => document.getElementById(id);
+const fmt = n => n.toLocaleString('ko-KR');
+const pct = (a,b) => b ? (a/b*100).toFixed(1) : '0.0';
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const kst = iso => { const d = new Date(new Date(iso).getTime() + 9*3600e3); return d.toISOString().slice(0,16).replace('T',' '); };
+
+async function get(path){
+  const r = await fetch(`${PROJECT}/rest/v1/${path}`, {headers:{apikey:KEY}});
+  if(!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+  return r.json();
+}
+async function getAll(table, select){          // PostgREST 는 한 번에 최대 1,000행 → 나눠 받기
+  const out = [];
+  for(let off=0;;off+=1000){
+    const part = await get(`${table}?select=${select}&order=published_at&limit=1000&offset=${off}`);
+    out.push(...part); if(part.length < 1000) break;
+  }
+  return out;
+}
+
+function bars(el, items, total, color){
+  const max = Math.max(...items.map(i=>i.n), 1);
+  el.innerHTML = items.map(i => `<div class="bar"><span>${esc(i.label)}</span>
+    <div class="t"><div class="f" style="width:${i.n/max*100}%;background:${i.color||color||css('--accent')}"></div></div>
+    <span class="n">${fmt(i.n)} · ${pct(i.n,total)}%</span></div>`).join('');
+}
+
+let ROWS = [], VIEW = [], page = 0; const PER = 30;
+
+function render(runs){
+  const n = ROWS.length, ids = new Set(ROWS.map(r=>r.comment_id)).size;
+  const run = runs[0] || {};
+  const likes = ROWS.reduce((a,r)=>a+(r.like_count||0),0);
+  const days = [...new Set(ROWS.map(r=>kst(r.published_at).slice(0,10)))].sort();
+  $('meta').innerHTML = `영상 「청약통장 다들 왜 깨고 있을까?」(크랩) 댓글 · 분석 기간 ${run.period_start||days[0]} ~ ${run.period_end||days.at(-1)} (KST) · 모델 ${esc(run.model||ROWS[0]?.model||'-')} · 불러온 시각 ${kst(new Date().toISOString())} KST`;
+
+  const kp = [
+    [fmt(n), 'DB 저장 댓글 (cheongyak_comments)'],
+    [fmt(ids), '고유 comment_id'],
+    [n===ids ? '<span class="ok">0 · 중복 없음</span>' : fmt(n-ids), '중복 저장된 댓글'],
+    [run.n_comments!=null ? (run.n_comments===n ? `<span class="ok">${fmt(run.n_comments)} 일치</span>` : fmt(run.n_comments)) : '-', '실행 기록의 업로드 행 수 (cheongyak_runs)'],
+    [fmt(likes), '좋아요 합계'],
+  ];
+  $('kpis').innerHTML = kp.map(([v,l])=>`<div class="card kpi"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+
+  // 태도
+  const sc = {N:0,M:0,P:0,X:0}; ROWS.forEach(r=>sc[r.stance]=(sc[r.stance]||0)+1);
+  const rel = sc.N+sc.M+sc.P;
+  $('stanceStack').innerHTML = ['N','M','P'].map(k=>`<span title="${STANCE[k]} ${sc[k]}" style="width:${sc[k]/rel*100}%;background:${css('--'+k)}"></span>`).join('');
+  $('stanceLegend').innerHTML = ['N','M','P'].map(k=>`<span><i style="background:${css('--'+k)}"></i>${STANCE[k]} ${pct(sc[k],rel)}%</span>`).join('');
+  bars($('stanceBars'), ['N','M','P','X'].map(k=>({label:STANCE[k], n:sc[k], color:css('--'+k)})), n);
+
+  // 관심사
+  const tc = {}; ROWS.forEach(r=>[...(r.topics||'')].forEach(c=>tc[c]=(tc[c]||0)+1));
+  bars($('topicBars'), Object.keys(TOPIC).map(k=>({label:TOPIC[k], n:tc[k]||0})).sort((a,b)=>b.n-a.n), n);
+
+  // 날짜별
+  const maxDay = Math.max(...days.map(d=>ROWS.filter(r=>kst(r.published_at).startsWith(d)).length));
+  $('days').innerHTML = days.map(d=>{
+    const rs = ROWS.filter(r=>kst(r.published_at).startsWith(d));
+    const seg = ['N','M','P','X'].map(k=>{const c=rs.filter(r=>r.stance===k).length;
+      return `<span title="${STANCE[k]} ${c}" style="width:${c/maxDay*100}%;background:${css('--'+k)}"></span>`;}).join('');
+    return `<div class="day"><span>${d.slice(5).replace('-','/')}</span><div class="stack" style="height:16px;background:transparent">${seg}</div><span class="sub" style="text-align:right">${rs.length}</span></div>`;
+  }).join('') + `<div class="legend">${['N','M','P','X'].map(k=>`<span><i style="background:${css('--'+k)}"></i>${STANCE[k]}</span>`).join('')}</div>`;
+
+  // 전망·행동
+  const cnt = (f,v) => ROWS.filter(r=>r[f]===v).length;
+  $('oa').innerHTML = '<div class="sub" style="margin-bottom:4px">집값 전망</div><div id="ob"></div><div class="sub" style="margin:12px 0 4px">청약통장 행동</div><div id="ab"></div>';
+  bars($('ob'), [{label:'하락', n:cnt('outlook','D')},{label:'상승', n:cnt('outlook','U')},{label:'언급 없음', n:cnt('outlook','0'), color:css('--X')}], n);
+  bars($('ab'), [{label:'해지', n:cnt('action','H'), color:css('--N')},{label:'유지', n:cnt('action','K'), color:css('--P')},{label:'언급 없음', n:cnt('action','0'), color:css('--X')}], n);
+
+  const cUrl = `${PROJECT}/rest/v1/cheongyak_comments?select=*&order=published_at&limit=100&apikey=${KEY}`;
+  $('foot').innerHTML = `데이터: Supabase 테이블 <b>cheongyak_comments</b>, <b>cheongyak_runs</b>를 이 페이지가 열릴 때 직접 조회한 결과입니다(읽기 전용).
+    원본 JSON: <a href="${cUrl}">cheongyak_comments</a> · <a href="${PROJECT}/rest/v1/cheongyak_runs?select=run_folder,period_start,period_end,n_comments,model&apikey=${KEY}">cheongyak_runs</a> ·
+    코드: <a href="${REPO}">${REPO}</a>`;
+}
+
+function filter(){
+  const s=$('fStance').value, t=$('fTopic').value, a=$('fAction').value, q=$('fText').value.trim(), so=$('fSort').value;
+  VIEW = ROWS.filter(r=>(!s||r.stance===s)&&(!t||(r.topics||'').includes(t))&&(!a||r.action===a)&&(!q||(r.text_raw||'').includes(q)));
+  if(so==='likes') VIEW = [...VIEW].sort((x,y)=>(y.like_count||0)-(x.like_count||0));
+  page=0; table();
+}
+function table(){
+  const pages = Math.max(1, Math.ceil(VIEW.length/PER));
+  $('rows').innerHTML = VIEW.slice(page*PER,(page+1)*PER).map(r=>`<tr>
+    <td style="white-space:nowrap">${kst(r.published_at).slice(5)}</td>
+    <td><span class="chip" style="background:${css('--'+r.stance)}">${STANCE[r.stance]||r.stance}</span></td>
+    <td>${[...(r.topics||'')].map(c=>`<span class="tchip" title="${TOPIC[c]}">${TOPIC[c]||c}</span>`).join('')}</td>
+    <td>${OUT[r.outlook]||''}</td><td>${ACT[r.action]||''}</td>
+    <td style="text-align:right">${fmt(r.like_count||0)}</td>
+    <td class="txt">${esc(r.text_raw)}</td></tr>`).join('') || '<tr><td colspan="7" class="sub">해당하는 댓글이 없습니다.</td></tr>';
+  $('pinfo').textContent = `${fmt(VIEW.length)}개 중 ${VIEW.length?page*PER+1:0}–${Math.min((page+1)*PER,VIEW.length)} (${page+1}/${pages}쪽)`;
+  $('prev').disabled = page===0; $('next').disabled = page>=pages-1;
+}
+
+(async () => {
+  try{
+    const [rows, runs] = await Promise.all([
+      getAll('cheongyak_comments','comment_id,published_at,like_count,stance,topics,outlook,action,text_raw,model'),
+      get('cheongyak_runs?select=run_folder,period_start,period_end,n_comments,model'),
+    ]);
+    ROWS = rows;
+    Object.entries(STANCE).forEach(([k,v])=>$('fStance').insertAdjacentHTML('beforeend',`<option value="${k}">${v}</option>`));
+    Object.entries(TOPIC).forEach(([k,v])=>$('fTopic').insertAdjacentHTML('beforeend',`<option value="${k}">${v}</option>`));
+    render(runs); filter();
+    ['fStance','fTopic','fAction','fSort'].forEach(id=>$(id).onchange=filter);
+    $('fText').oninput=filter;
+    $('prev').onclick=()=>{page--;table();}; $('next').onclick=()=>{page++;table();};
+  }catch(e){
+    $('meta').innerHTML = `<div class="card err">Supabase에서 데이터를 불러오지 못했습니다: ${esc(e.message)}</div>`;
+  }
+})();
+</script>
+</body>
+</html>
