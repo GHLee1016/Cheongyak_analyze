@@ -45,7 +45,7 @@ cd report && npm install && node build_report.js && cd ..
 ```bash
 # 분류 신뢰도 검증: 코딩 시트를 만들고 → 조원이 직접 채운 뒤 → LLM 결과와 비교(Cohen's κ)
 python check_reliability.py sample
-python check_reliability.py score output/reliability_sheet_kim.csv
+python check_reliability.py score output/reliability_sheet_kim.xlsx output/reliability_sheet_lee.xlsx
 
 # 주택시장 데이터: 실거래가 API 수집 + data/manual/ 에 넣은 공공데이터 파일 정리
 python housing_data.py --start 202101 --end 202608
