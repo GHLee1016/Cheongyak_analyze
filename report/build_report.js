@@ -52,7 +52,10 @@ const vcPath = path.join(RESULTS, 'verify_counts.json');
 const VC = fs.existsSync(vcPath) ? JSON.parse(fs.readFileSync(vcPath, 'utf-8')) : null;
 // 각주 링크 (코드 저장소, 데이터베이스)
 const GITHUB_URL = 'https://github.com/GHLee1016/Chungyak_analyze';
-const SUPABASE_URL = 'https://supabase.com/dashboard/project/evfplzqpewwjtttlmvxc';
+// Supabase REST 조회 링크 (publishable 키 = 공개용, 테이블은 RLS 로 읽기만 허용)
+const SB_KEY = 'sb_publishable_Z3P3DWzEzLeL7BAhArEotQ_hptLYysY';
+const SUPABASE_URL = `https://evfplzqpewwjtttlmvxc.supabase.co/rest/v1/cheongyak_comments?select=comment_id,published_at,stance,topics,outlook,action,text_raw&order=published_at&limit=100&apikey=${SB_KEY}`;
+const SUPABASE_RUNS_URL = `https://evfplzqpewwjtttlmvxc.supabase.co/rest/v1/cheongyak_runs?select=run_folder,period_start,period_end,n_comments,model&apikey=${SB_KEY}`;
 const clPath = path.join(RESULTS, 'collection_log.json');                      // 수집 조건 기록 (collect_comments.py)
 const CL = fs.existsSync(clPath) ? JSON.parse(fs.readFileSync(clPath, 'utf-8')) : {};
 const kstTime = (iso) => { const d = new Date(new Date(iso).getTime() + 9 * 3600e3);   // UTC → 한국 시간
@@ -430,9 +433,10 @@ const doc = new Document({
     1: { children: [new Paragraph({ children: [new TextRun({ text: '코드 저장소(GitHub): ', size: 17 }),
       new ExternalHyperlink({ link: GITHUB_URL, children: [new TextRun({ text: GITHUB_URL, style: 'Hyperlink', color: '2A78D6', underline: {}, size: 17 })] }),
       new TextRun({ text: ' — 수집(collect_comments.py), 분류(classify_comments.py), 집계(analyze_comments.py), 신뢰도 검증(check_reliability.py), DB 저장(upload_supabase.py), 건수 대조(verify_counts.py), 보고서 생성(report/build_report.js) 코드와 결과 폴더 전체.', size: 17 })] })] },
-    2: { children: [new Paragraph({ children: [new TextRun({ text: 'Supabase 프로젝트(데이터베이스): ', size: 17 }),
+    2: { children: [new Paragraph({ children: [new TextRun({ text: 'Supabase 조회 링크(읽기 전용, 로그인 불필요) — 댓글 분류 결과(처음 100행): ', size: 17 }),
       new ExternalHyperlink({ link: SUPABASE_URL, children: [new TextRun({ text: SUPABASE_URL, style: 'Hyperlink', color: '2A78D6', underline: {}, size: 17 })] }),
-      new TextRun({ text: ' — 테이블 cheongyak_comments, cheongyak_runs (프로젝트 멤버로 초대받은 계정만 열람 가능).', size: 17 })] })] },
+      new TextRun({ text: ' / 실행 정보: ', size: 17 }),
+      new ExternalHyperlink({ link: SUPABASE_RUNS_URL, children: [new TextRun({ text: SUPABASE_RUNS_URL, style: 'Hyperlink', color: '2A78D6', underline: {}, size: 17 })] })] })] },
   },
   styles: {
     default: { document: { run: { font: FONT, size: 21 } } },
